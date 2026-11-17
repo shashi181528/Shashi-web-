@@ -38,15 +38,20 @@ const overlay = document.getElementById('auth-overlay');
 const landingMain = document.getElementById('top');
 const matchesPage = document.getElementById('matches-page');
 const likesPage = document.getElementById('likes-page');
+const profilePage = document.getElementById('profile-page');
 const findMatchesNav = document.getElementById('find-matches-nav');
 const likesNav = document.getElementById('likes-nav');
+const profileNav = document.getElementById('profile-nav');
+const siteFooter = document.querySelector('.site-footer');
 const panels = [...document.querySelectorAll('.auth-panel')];
 const progress = [...document.querySelectorAll('.progress-step')];
 const profile = { location: null, photoUrls: [] };
 const registryStorageKey = 'goodkind-demo-registered-phones';
 const sessionStorageKey = 'goodkind-demo-active-phone';
+const profileStorageKey = 'goodkind-demo-profiles';
 const registeredPhones = new Set(readRegisteredPhones());
 let authMode = 'register';
+let editProfileMode = false;
 let verifiedPhone = '';
 let currentPhoneKey = readActivePhone();
 let currentMatchIndex = 0;
@@ -56,6 +61,58 @@ const loginButtons = [...document.querySelectorAll('.nav-actions .auth-trigger')
 const heroMatchTrigger = document.getElementById('hero-match-trigger');
 const joinRegisterButton = document.getElementById('join-register-trigger');
 const joinRegisterMessage = document.getElementById('join-register-message');
+function readSavedProfiles() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(profileStorageKey) || '{}');
+    return saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+  } catch {
+    return {};
+  }
+}
+function loadProfileForPhone(phone) {
+  profile.photoUrls.forEach((url) => URL.revokeObjectURL(url));
+  profile.photoUrls = [];
+  Object.keys(profile).forEach((key) => { if (key !== 'photoUrls') delete profile[key]; });
+  profile.location = null;
+  const saved = readSavedProfiles()[phone];
+  if (!saved) return;
+  Object.assign(profile, saved);
+  profile.photoUrls = [];
+  profile.location = saved.locationLabel ? { label: saved.locationLabel, latitude: null, longitude: null, source: 'saved-profile' } : null;
+}
+function saveCurrentProfile() {
+  if (!currentPhoneKey) return;
+  profile.name = document.getElementById('profile-name').value.trim();
+  profile.age = Number(document.getElementById('profile-age').value);
+  profile.dob = document.getElementById('profile-dob').value;
+  profile.bio = document.getElementById('profile-bio').value.trim();
+  profile.gender = document.querySelector('#profile-form input[name="gender"]:checked')?.value || '';
+  profile.lookingFor = document.getElementById('looking-for').value;
+  profile.datingIntent = document.getElementById('dating-intent').value;
+  profile.drinking = document.getElementById('drinking').value;
+  profile.smoking = document.getElementById('smoking').value;
+  profile.locationLabel = profile.location?.label || document.getElementById('location-search').value.trim();
+  profile.interests = [...document.querySelectorAll('#details-form input[name="interest"]:checked')].map((input) => input.value);
+  profile.languages = [...document.querySelectorAll('#details-form input[name="language"]:checked')].map((input) => input.value);
+  profile.motherTongue = document.getElementById('mother-tongue').value;
+  profile.familyPlan = document.getElementById('family-plan').value;
+  profile.religion = document.getElementById('religion').value;
+  profile.education = document.getElementById('education').value;
+  profile.exercise = document.getElementById('exercise').value;
+  profile.jobTitle = document.getElementById('job-title').value.trim();
+  profile.company = document.getElementById('company-name').value.trim();
+  profile.workplace = document.getElementById('workplace').value.trim();
+  const savedProfile = { ...profile };
+  delete savedProfile.location;
+  delete savedProfile.photoUrls;
+  const allProfiles = readSavedProfiles();
+  allProfiles[currentPhoneKey] = savedProfile;
+  try {
+    localStorage.setItem(profileStorageKey, JSON.stringify(allProfiles));
+  } catch {
+    // Keep the current profile available in memory if browser storage is full or unavailable.
+  }
+}
 function syncRegistrationCallToAction() {
   const registrationComplete = registeredPhones.size > 0;
   joinRegisterButton.disabled = registrationComplete;
@@ -68,10 +125,13 @@ function syncAccountNavigation() {
   const signedIn = Boolean(currentPhoneKey && registeredPhones.has(currentPhoneKey));
   findMatchesNav.classList.toggle('hidden', !signedIn);
   likesNav.classList.toggle('hidden', !signedIn);
+  profileNav.classList.toggle('hidden', !signedIn);
   logoutButton.classList.toggle('hidden', !signedIn);
+  siteFooter.classList.toggle('hidden', signedIn);
   loginButtons.forEach((button) => button.classList.toggle('hidden', signedIn));
   syncRegistrationCallToAction();
 }
+if (currentPhoneKey) loadProfileForPhone(currentPhoneKey);
 function readRegisteredPhones() {
   try {
     const saved = JSON.parse(localStorage.getItem(registryStorageKey) || '[]');
@@ -134,6 +194,22 @@ dobInput.addEventListener('change', () => {
 ageInput.addEventListener('input', () => { ageInput.value = ageInput.value.replace(/\D/g, '').slice(0, 2); });
 const bioInput = document.getElementById('profile-bio');
 bioInput.addEventListener('input', () => { document.getElementById('bio-count').textContent = String(bioInput.value.length); });
+const educationSelect = document.getElementById('education');
+const jobTitleInput = document.getElementById('job-title');
+const companyNameInput = document.getElementById('company-name');
+function syncCollegeJobRequirements() {
+  const inCollege = educationSelect.value === 'Currently in college';
+  jobTitleInput.required = !inCollege;
+  companyNameInput.required = !inCollege;
+  document.querySelector('label[for="job-title"]').innerHTML = inCollege
+    ? 'Job / profession <span class="optional-label">Optional in college</span>'
+    : 'Job / profession';
+  document.querySelector('label[for="company-name"]').innerHTML = inCollege
+    ? 'Company name <span class="optional-label">Optional in college</span>'
+    : 'Company name';
+}
+educationSelect.addEventListener('change', syncCollegeJobRequirements);
+syncCollegeJobRequirements();
 function showPanel(id, step) {
   panels.forEach((panel) => panel.classList.toggle('hidden', panel.id !== id));
   progress.forEach((bar, index) => {
@@ -162,10 +238,15 @@ function closeAuth() {
   overlay.classList.remove('open');
   overlay.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('auth-open');
+  if (editProfileMode) {
+    editProfileMode = false;
+    document.getElementById('photos-submit-button').innerHTML = 'Finish profile <span>→</span>';
+  }
 }
 function showLandingPage() {
   matchesPage.hidden = true;
   likesPage.hidden = true;
+  profilePage.hidden = true;
   landingMain.hidden = false;
   document.body.classList.remove('matches-view');
 }
@@ -173,6 +254,7 @@ function openMatchesPage() {
   closeAuth();
   landingMain.hidden = true;
   likesPage.hidden = true;
+  profilePage.hidden = true;
   matchesPage.hidden = false;
   document.body.classList.add('matches-view');
   if (!matchFiltersInitialized) initializeMatchFilters();
@@ -183,13 +265,24 @@ function openLikesPage() {
   closeAuth();
   landingMain.hidden = true;
   matchesPage.hidden = true;
+  profilePage.hidden = true;
   likesPage.hidden = false;
   document.body.classList.add('matches-view');
   renderLikesPage();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+function openProfilePage() {
+  closeAuth();
+  landingMain.hidden = true;
+  matchesPage.hidden = true;
+  likesPage.hidden = true;
+  profilePage.hidden = false;
+  document.body.classList.add('matches-view');
+  renderProfilePage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 document.querySelectorAll('.main-nav a, .site-footer a, .site-header .brand').forEach((link) => link.addEventListener('click', () => {
-  if (!matchesPage.hidden) showLandingPage();
+  if (!matchesPage.hidden || !likesPage.hidden || !profilePage.hidden) showLandingPage();
   setMobileMenu(false);
 }));
 findMatchesNav.addEventListener('click', () => {
@@ -200,6 +293,11 @@ findMatchesNav.addEventListener('click', () => {
 likesNav.addEventListener('click', () => {
   setMobileMenu(false);
   if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openLikesPage();
+  else openAuth('login');
+});
+profileNav.addEventListener('click', () => {
+  setMobileMenu(false);
+  if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openProfilePage();
   else openAuth('login');
 });
 logoutButton.addEventListener('click', () => {
@@ -271,6 +369,7 @@ document.getElementById('otp-form').addEventListener('submit', (event) => {
     return;
   }
   if (authMode === 'login') {
+    loadProfileForPhone(currentPhoneKey);
     setActiveSession(currentPhoneKey);
     showMatches();
   } else {
@@ -544,8 +643,82 @@ document.getElementById('details-form').addEventListener('submit', (event) => {
   profile.interests = interests.map((input) => input.value);
   profile.languages = languages.map((input) => input.value);
   profile.motherTongue = document.getElementById('mother-tongue').value;
+  profile.familyPlan = document.getElementById('family-plan').value;
+  profile.religion = document.getElementById('religion').value;
+  profile.education = document.getElementById('education').value;
+  profile.exercise = document.getElementById('exercise').value;
+  profile.jobTitle = document.getElementById('job-title').value.trim();
+  profile.company = document.getElementById('company-name').value.trim();
+  profile.workplace = document.getElementById('workplace').value.trim();
   showPanel('photos-form', 4);
 });
+function ensureEditableLanguageOption(language) {
+  let checkbox = [...languageOptions.querySelectorAll('input[name="language"]')]
+    .find((input) => input.value.toLowerCase() === language.toLowerCase());
+  if (!checkbox) {
+    const label = document.createElement('label');
+    checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.name = 'language';
+    checkbox.value = language;
+    const span = document.createElement('span');
+    span.textContent = language;
+    label.append(checkbox, span);
+    document.getElementById('custom-language-options').append(label);
+  }
+  if (![...motherTongueSelect.options].some((option) => option.value === language)) {
+    const option = document.createElement('option');
+    option.value = language;
+    option.textContent = language;
+    motherTongueSelect.add(option, motherTongueSelect.options[motherTongueSelect.options.length - 1]);
+  }
+  return checkbox;
+}
+function populateProfileEditor() {
+  document.getElementById('profile-name').value = profile.name || '';
+  document.getElementById('profile-age').value = profile.age ? String(profile.age).padStart(2, '0') : '';
+  document.getElementById('profile-dob').value = profile.dob || '';
+  document.getElementById('profile-bio').value = profile.bio || '';
+  document.getElementById('bio-count').textContent = String((profile.bio || '').length);
+  document.querySelectorAll('#profile-form input[name="gender"]').forEach((input) => { input.checked = input.value === profile.gender; });
+  document.getElementById('looking-for').value = profile.lookingFor || '';
+  document.getElementById('dating-intent').value = profile.datingIntent || '';
+  document.getElementById('drinking').value = profile.drinking || '';
+  document.getElementById('smoking').value = profile.smoking || '';
+  document.getElementById('location-search').value = profile.locationLabel || '';
+  document.getElementById('location-status').textContent = profile.locationLabel ? `Location entered: ${profile.locationLabel}` : 'Location not added yet.';
+  document.getElementById('location-status').classList.toggle('ok', Boolean(profile.locationLabel));
+  document.getElementById('adult-confirm').checked = true;
+  document.querySelectorAll('#interest-options input[name="interest"]').forEach((input) => { input.checked = (profile.interests || []).includes(input.value); });
+  document.getElementById('interest-count').textContent = `${(profile.interests || []).length} of 5 selected`;
+  document.querySelectorAll('#language-options input[name="language"]').forEach((input) => { input.checked = false; });
+  document.getElementById('custom-language-options').replaceChildren();
+  otherLanguageToggle.checked = false;
+  otherLanguageEntry.hidden = true;
+  (profile.languages || []).forEach((language) => { ensureEditableLanguageOption(language).checked = true; });
+  if (profile.motherTongue) ensureEditableLanguageOption(profile.motherTongue);
+  document.getElementById('mother-tongue').value = profile.motherTongue || '';
+  document.getElementById('family-plan').value = profile.familyPlan || '';
+  document.getElementById('religion').value = profile.religion || '';
+  document.getElementById('education').value = profile.education || '';
+  document.getElementById('exercise').value = profile.exercise || '';
+  document.getElementById('job-title').value = profile.jobTitle || '';
+  document.getElementById('company-name').value = profile.company || '';
+  document.getElementById('workplace').value = profile.workplace || '';
+  if (profile.locationLabel) profile.location = { label: profile.locationLabel, latitude: null, longitude: null, source: 'saved-profile' };
+  syncCollegeJobRequirements();
+}
+function openProfileEditor() {
+  editProfileMode = true;
+  populateProfileEditor();
+  document.getElementById('photos-form .auth-error').textContent = '';
+  document.getElementById('photos-submit-button').innerHTML = 'Save changes <span>→</span>';
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('auth-open');
+  showPanel('profile-form', 2);
+}
+document.getElementById('edit-profile-button').addEventListener('click', openProfileEditor);
 const photoInputs = [...document.querySelectorAll('.photo-slot input[type="file"]')];
 photoInputs.forEach((input, index) => {
   input.addEventListener('change', () => {
@@ -573,11 +746,19 @@ photoInputs.forEach((input, index) => {
 document.getElementById('photos-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const chosen = photoInputs.filter((input) => input.files?.length).length;
-  if (chosen < 2) {
+  if (!editProfileMode && chosen < 2) {
     document.querySelector('#photos-form .auth-error').textContent = `Add ${2 - chosen} more required photo${chosen ? '' : 's'} to continue.`;
     return;
   }
   profile.company = document.getElementById('company-name').value.trim();
+  saveCurrentProfile();
+  if (editProfileMode) {
+    editProfileMode = false;
+    document.getElementById('photos-submit-button').innerHTML = 'Finish profile <span>→</span>';
+    closeAuth();
+    renderProfilePage();
+    return;
+  }
   saveRegisteredPhone(currentPhoneKey);
   setActiveSession(currentPhoneKey);
   showMatches();
@@ -888,6 +1069,62 @@ function createLikeCard(match) {
   copy.append(eyebrow, title, subline, bio, tags, actions);
   card.append(photo, copy);
   return card;
+}
+
+function renderProfilePage() {
+  const hasProfile = Boolean(profile.name);
+  const emptyMessage = document.getElementById('profile-page-empty');
+  const profileCard = document.querySelector('.profile-page-card');
+  emptyMessage.hidden = hasProfile;
+  profileCard.hidden = !hasProfile;
+  if (!hasProfile) {
+    document.getElementById('profile-display-name').textContent = 'Your profile';
+    document.getElementById('profile-display-location').textContent = '';
+    return;
+  }
+  document.getElementById('profile-display-name').textContent = `${profile.name}${profile.age ? `, ${profile.age}` : ''}`;
+  document.getElementById('profile-display-location').textContent = [profile.gender, profile.locationLabel].filter(Boolean).join(' · ');
+  document.getElementById('profile-display-bio').textContent = profile.bio || 'Add a bio to help people get to know you.';
+  const gallery = document.getElementById('profile-photo-gallery');
+  gallery.replaceChildren();
+  const photos = (profile.photoUrls || []).filter(Boolean);
+  if (!photos.length) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'profile-photo-placeholder';
+    placeholder.textContent = 'Your photos will appear here';
+    gallery.append(placeholder);
+  } else {
+    photos.forEach((url, index) => {
+      const image = document.createElement('img');
+      image.className = 'profile-photo';
+      image.src = url;
+      image.alt = `${profile.name}'s photo ${index + 1}`;
+      gallery.append(image);
+    });
+  }
+  const interests = document.getElementById('profile-display-interests');
+  interests.replaceChildren();
+  (profile.interests || []).forEach((value) => {
+    const chip = document.createElement('span');
+    chip.textContent = value;
+    interests.append(chip);
+  });
+  const details = document.getElementById('profile-display-details');
+  details.replaceChildren();
+  [
+    ['Looking for', profile.lookingFor], ['Relationship', profile.datingIntent], ['Languages', (profile.languages || []).join(', ')],
+    ['Mother tongue', profile.motherTongue], ['Family plans', profile.familyPlan], ['Religion', profile.religion],
+    ['Education', profile.education], ['Exercise', profile.exercise], ['Job', profile.jobTitle],
+    ['Company', profile.company], ['Workplace', profile.workplace], ['Drinking', profile.drinking], ['Smoking', profile.smoking]
+  ].filter(([, value]) => Boolean(value)).forEach(([label, value]) => {
+    const row = document.createElement('div');
+    const term = document.createElement('dt');
+    const description = document.createElement('dd');
+    term.textContent = label;
+    description.textContent = value;
+    row.append(term, description);
+    details.append(row);
+  });
 }
 
 if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openMatchesPage();
