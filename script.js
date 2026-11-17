@@ -51,7 +51,6 @@ const messagesNav = document.getElementById('messages-nav');
 const viewedNav = document.getElementById('viewed-nav');
 const plansNav = document.getElementById('plans-nav');
 const adminNav = document.getElementById('admin-nav');
-const siteFooter = document.querySelector('.site-footer');
 const panels = [...document.querySelectorAll('.auth-panel')];
 const progress = [...document.querySelectorAll('.progress-step')];
 const profile = { location: null, photoUrls: [] };
@@ -143,7 +142,6 @@ function syncAccountNavigation() {
   messagesNav.classList.toggle('hidden', !signedIn);
   viewedNav.classList.toggle('hidden', !signedIn);
   logoutButton.classList.toggle('hidden', !signedIn);
-  siteFooter.classList.toggle('hidden', signedIn);
   loginButtons.forEach((button) => button.classList.toggle('hidden', signedIn));
   updateMessagesBadge();
   syncSubscriptionAccess();
@@ -417,7 +415,6 @@ logoutButton.addEventListener('click', () => {
   syncAccountNavigation();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
-document.getElementById('footer-match-trigger').addEventListener('click', () => findMatchesNav.click());
 document.querySelectorAll('.auth-trigger').forEach((button) => button.addEventListener('click', () => {
   setMobileMenu(false);
   if (button === heroMatchTrigger && currentPhoneKey && registeredPhones.has(currentPhoneKey)) {
