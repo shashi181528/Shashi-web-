@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f4ee">
+  <title>Goodkind Admin — memberships</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=membership-admin-20261117">
+</head>
+<body>
+  <header class="site-header admin-header">
+    <a class="brand" href="index.html" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
+    <a class="admin-main-link" href="index.html">← Back to Goodkind</a>
+  </header>
+  <main class="admin-page">
+    <div class="admin-page-wrap section-wrap">
+      <div class="section-kicker">GOODKIND ADMIN</div><h1>Membership<br><em>control room.</em></h1>
+      <p class="admin-intro">Publish subscription offers and grant preview access to registered demo accounts.</p>
+      <div class="admin-preview-note">Local demo portal: changes are stored only in this browser. Add server-side administrator access and a membership backend before using this portal with real users.</div>
+      <form id="admin-plan-form" class="admin-panel">
+        <h2>Publish a subscription offer</h2>
+        <div class="admin-form-grid">
+          <div><label for="admin-plan-name">Plan name</label><input id="admin-plan-name" maxlength="40" placeholder="Goodkind Plus" required></div>
+          <div><label for="admin-plan-price">Price (₹)</label><input id="admin-plan-price" type="number" min="1" max="100000" step="1" placeholder="199" required></div>
+          <div><label for="admin-plan-duration">Duration (days)</label><input id="admin-plan-duration" type="number" min="1" max="3650" value="30" required></div>
+          <div><label for="admin-plan-period">Billing label</label><select id="admin-plan-period"><option>month</option><option>quarter</option><option>year</option><option>one time</option></select></div>
+          <div class="admin-description-field"><label for="admin-plan-description">Short description</label><input id="admin-plan-description" maxlength="120" placeholder="A little more freedom to find your person."></div>
+        </div>
+        <fieldset class="admin-feature-list"><legend>Included features</legend>
+          <label><input type="checkbox" name="plan-feature" value="rewind" checked> Rewind passed profiles</label>
+          <label><input type="checkbox" name="plan-feature" value="unlimitedLikes" checked> Unlimited likes</label>
+          <label><input type="checkbox" name="plan-feature" value="advancedFilters" checked> Advanced filters</label>
+        </fieldset>
+        <button class="button button-dark" type="submit">Publish plan <span>→</span></button><span id="admin-plan-feedback" class="admin-feedback" role="status" aria-live="polite"></span>
+      </form>
+      <section class="admin-panel"><h2>Published offers</h2><div id="admin-plan-list" class="admin-plan-list"></div></section>
+      <section class="admin-panel"><h2>Grant access to a registered account</h2><form id="admin-grant-form" class="admin-grant-form"><div><label for="admin-user-select">Registered account</label><select id="admin-user-select" required></select></div><div><label for="admin-grant-plan">Subscription plan</label><select id="admin-grant-plan" required></select></div><button class="button button-dark" type="submit">Grant preview access</button></form><span id="admin-grant-feedback" class="admin-feedback" role="status" aria-live="polite"></span></section>
+      <section class="admin-panel"><h2>Account access overview</h2><div id="admin-subscriber-list" class="admin-subscriber-list"></div></section>
+    </div>
+  </main>
+  <script src="admin.js"></script>
+</body>
+</html>
