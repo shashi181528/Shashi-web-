@@ -449,12 +449,10 @@ function hideLocationSuggestions() {
   activeLocationOption = -1;
 }
 function formatPlace(feature) {
-  if (feature.place_name || feature.matching_place_name) return feature.place_name || feature.matching_place_name;
   const properties = feature.properties || {};
-  const local = feature.text || properties.name || properties.street || properties.city || properties.district || 'Place';
-  const context = (feature.context || []).map((item) => item.text).filter(Boolean);
+  const local = properties.name || properties.street || properties.city || properties.district || properties.county || 'Place';
   const photonContext = [properties.city, properties.district, properties.county, properties.state, properties.country].filter(Boolean);
-  return [...new Set([local, ...context, ...photonContext])].join(', ');
+  return [...new Set([local, ...photonContext])].join(', ');
 }
 async function requestPlaceSuggestions(query, signal) {
   const photonParams = new URLSearchParams({ q: query, limit: '6', lang: 'en' });
@@ -488,7 +486,7 @@ async function reverseGeocode(latitude, longitude) {
   }
 }
 function renderLocationOptions(features) {
-  locationOptions = features.filter((feature) => feature?.geometry?.coordinates?.length === 2 && (feature?.place_name || feature?.text || feature?.properties));
+  locationOptions = features.filter((feature) => feature?.geometry?.coordinates?.length === 2 && feature?.properties);
   locationSuggestions.replaceChildren();
   if (!locationOptions.length) {
     const empty = document.createElement('div');
