@@ -1,4 +1,9 @@
- Add README
+# Netlify deployment
+
+This site serves the HTML, CSS, and JavaScript files in the repository root directly. It does not require a Jekyll build or a generated `_site` directory.
+
+`netlify.toml` sets the publish directory to `.` and uses an explicit no-op build command to override the Jekyll command saved in Netlify's settings. Keep this command non-empty so the saved build command does not take effect again. The `_config.yml` file is for GitHub Pages and is not used by this Netlify deployment.
+
 # Quickstart for GitHub Pages
 
 You can use GitHub Pages to showcase open source projects, host a blog, or even share your résumé. This guide will help get you started on creating your next website.

@@ -1,4 +1,4 @@
 [build]
-  # Serve the static files directly; override the Jekyll command in the UI.
-  command = ""
+  # A non-empty command overrides the saved Jekyll command in Netlify's settings.
+  command = "echo 'Static site ready; no build required'"
   publish = "."
