@@ -383,6 +383,10 @@ document.addEventListener('keydown', (event) => {
 document.querySelector('.back-to-phone').addEventListener('click', () => showPanel('phone-form', 0));
 document.querySelectorAll('.back-to-profile').forEach((button) => button.addEventListener('click', () => showPanel('profile-form', 2)));
 document.querySelector('.back-to-details').addEventListener('click', () => showPanel('details-form', 3));
+const phoneNumberInput = document.getElementById('phone-number');
+phoneNumberInput.addEventListener('input', () => {
+  phoneNumberInput.value = phoneNumberInput.value.replace(/\D/g, '').slice(0, 10);
+});
 document.getElementById('phone-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -454,27 +458,13 @@ function formatPlace(feature) {
   return [...new Set([local, ...context, ...photonContext])].join(', ');
 }
 async function requestPlaceSuggestions(query, signal) {
-  let mapTilerError;
-  try {
-    const mapTilerParams = new URLSearchParams({ key: MAPTILER_API_KEY, limit: '6', language: 'en', autocomplete: 'true' });
-    if (profile.location?.latitude != null && profile.location?.longitude != null) {
-      mapTilerParams.set('proximity', `${profile.location.longitude},${profile.location.latitude}`);
-    }
-    const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?${mapTilerParams}`, { signal });
-    if (!response.ok) throw new Error(`MapTiler returned ${response.status}`);
-    const data = await response.json();
-    if (data.features?.length) return data.features;
-  } catch (error) {
-    if (error.name === 'AbortError') throw error;
-    mapTilerError = error;
-  }
   const photonParams = new URLSearchParams({ q: query, limit: '6', lang: 'en' });
   if (profile.location?.latitude != null && profile.location?.longitude != null) {
     photonParams.set('lat', String(profile.location.latitude));
     photonParams.set('lon', String(profile.location.longitude));
   }
   const photonResponse = await fetch(`https://photon.komoot.io/api/?${photonParams}`, { signal });
-  if (!photonResponse.ok) throw mapTilerError || new Error('Place search is unavailable.');
+  if (!photonResponse.ok) throw new Error('Photon place search is unavailable.');
   const photonData = await photonResponse.json();
   return photonData.features || [];
 }

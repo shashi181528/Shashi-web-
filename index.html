@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=desktop-nav-20261117" />
 </head>
 <body>
   <header class="site-header">
@@ -21,7 +21,7 @@
       <div class="nav-actions"><button class="login-link auth-trigger" data-auth-mode="login">Log in</button><button class="button button-dark button-small auth-trigger" data-auth-mode="register">Create account <span>↗</span></button><button id="logout-button" class="login-link hidden" type="button">Log out</button></div>
     </div>
     <button class="menu-backdrop" type="button" aria-label="Close menu" tabindex="-1"></button>
-    <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+    <button id="menu-toggle" class="menu-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
   </header>
 
   <main id="top">
@@ -62,7 +62,7 @@
       <form id="phone-form" class="auth-panel">
         <div class="section-kicker">A GOOD PLACE TO START</div><h2 id="auth-title">Your number,<br><em>your next chapter.</em></h2>
         <p class="auth-description">Sign in or create an account with your mobile number. We’ll send a one-time code to verify it.</p>
-        <label for="phone-number">Mobile number</label><div class="phone-input"><select aria-label="Country calling code" id="country-code"><option value="+91">🇮🇳 +91</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option><option value="+61">🇦🇺 +61</option></select><input id="phone-number" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="98765 43210" required minlength="7"></div>
+        <label for="phone-number">Mobile number</label><div class="phone-input"><select aria-label="Country calling code" id="country-code"><option value="+91">🇮🇳 +91</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option><option value="+61">🇦🇺 +61</option></select><input id="phone-number" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="9876543210" required minlength="10" maxlength="10" pattern="[0-9]{10}" title="Enter exactly 10 digits"></div>
         <div class="auth-alert" id="auth-alert" role="alert" hidden><span id="auth-alert-message"></span><button id="auth-alert-action" type="button">Register for an account</button></div>
         <button class="button button-dark auth-submit" type="submit">Send verification code <span>→</span></button><div class="auth-error" aria-live="polite"></div>
         <p class="auth-legal">By continuing, you agree to our Terms and Privacy Policy. Standard SMS rates may apply.</p>
