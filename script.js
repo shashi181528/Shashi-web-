@@ -39,9 +39,13 @@ const landingMain = document.getElementById('top');
 const matchesPage = document.getElementById('matches-page');
 const likesPage = document.getElementById('likes-page');
 const profilePage = document.getElementById('profile-page');
+const messagesPage = document.getElementById('messages-page');
+const viewedPage = document.getElementById('viewed-page');
 const findMatchesNav = document.getElementById('find-matches-nav');
 const likesNav = document.getElementById('likes-nav');
 const profileNav = document.getElementById('profile-nav');
+const messagesNav = document.getElementById('messages-nav');
+const viewedNav = document.getElementById('viewed-nav');
 const siteFooter = document.querySelector('.site-footer');
 const panels = [...document.querySelectorAll('.auth-panel')];
 const progress = [...document.querySelectorAll('.progress-step')];
@@ -49,6 +53,7 @@ const profile = { location: null, photoUrls: [] };
 const registryStorageKey = 'goodkind-demo-registered-phones';
 const sessionStorageKey = 'goodkind-demo-active-phone';
 const profileStorageKey = 'goodkind-demo-profiles';
+const messageStorageKey = 'goodkind-demo-conversations';
 const registeredPhones = new Set(readRegisteredPhones());
 let authMode = 'register';
 let editProfileMode = false;
@@ -126,9 +131,12 @@ function syncAccountNavigation() {
   findMatchesNav.classList.toggle('hidden', !signedIn);
   likesNav.classList.toggle('hidden', !signedIn);
   profileNav.classList.toggle('hidden', !signedIn);
+  messagesNav.classList.toggle('hidden', !signedIn);
+  viewedNav.classList.toggle('hidden', !signedIn);
   logoutButton.classList.toggle('hidden', !signedIn);
   siteFooter.classList.toggle('hidden', signedIn);
   loginButtons.forEach((button) => button.classList.toggle('hidden', signedIn));
+  updateMessagesBadge();
   syncRegistrationCallToAction();
 }
 if (currentPhoneKey) loadProfileForPhone(currentPhoneKey);
@@ -155,6 +163,7 @@ function setActiveSession(phone) {
   } catch {
     // Keep the session in memory if browser storage is unavailable.
   }
+  loadMessageFlags(phone);
   syncAccountNavigation();
 }
 function saveRegisteredPhone(phone) {
@@ -247,6 +256,8 @@ function showLandingPage() {
   matchesPage.hidden = true;
   likesPage.hidden = true;
   profilePage.hidden = true;
+  messagesPage.hidden = true;
+  viewedPage.hidden = true;
   landingMain.hidden = false;
   document.body.classList.remove('matches-view');
 }
@@ -255,6 +266,8 @@ function openMatchesPage() {
   landingMain.hidden = true;
   likesPage.hidden = true;
   profilePage.hidden = true;
+  messagesPage.hidden = true;
+  viewedPage.hidden = true;
   matchesPage.hidden = false;
   document.body.classList.add('matches-view');
   if (!matchFiltersInitialized) initializeMatchFilters();
@@ -266,6 +279,8 @@ function openLikesPage() {
   landingMain.hidden = true;
   matchesPage.hidden = true;
   profilePage.hidden = true;
+  messagesPage.hidden = true;
+  viewedPage.hidden = true;
   likesPage.hidden = false;
   document.body.classList.add('matches-view');
   renderLikesPage();
@@ -276,13 +291,40 @@ function openProfilePage() {
   landingMain.hidden = true;
   matchesPage.hidden = true;
   likesPage.hidden = true;
+  messagesPage.hidden = true;
+  viewedPage.hidden = true;
   profilePage.hidden = false;
   document.body.classList.add('matches-view');
   renderProfilePage();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+function openMessagesPage() {
+  closeAuth();
+  landingMain.hidden = true;
+  matchesPage.hidden = true;
+  likesPage.hidden = true;
+  profilePage.hidden = true;
+  viewedPage.hidden = true;
+  messagesPage.hidden = false;
+  document.body.classList.add('matches-view');
+  activeConversationName = '';
+  renderMessagesPage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function openViewedPage() {
+  closeAuth();
+  landingMain.hidden = true;
+  matchesPage.hidden = true;
+  likesPage.hidden = true;
+  profilePage.hidden = true;
+  messagesPage.hidden = true;
+  viewedPage.hidden = false;
+  document.body.classList.add('matches-view');
+  renderViewedYouPage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 document.querySelectorAll('.main-nav a, .site-footer a, .site-header .brand').forEach((link) => link.addEventListener('click', () => {
-  if (!matchesPage.hidden || !likesPage.hidden || !profilePage.hidden) showLandingPage();
+  if (!matchesPage.hidden || !likesPage.hidden || !profilePage.hidden || !messagesPage.hidden || !viewedPage.hidden) showLandingPage();
   setMobileMenu(false);
 }));
 findMatchesNav.addEventListener('click', () => {
@@ -298,6 +340,16 @@ likesNav.addEventListener('click', () => {
 profileNav.addEventListener('click', () => {
   setMobileMenu(false);
   if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openProfilePage();
+  else openAuth('login');
+});
+messagesNav.addEventListener('click', () => {
+  setMobileMenu(false);
+  if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openMessagesPage();
+  else openAuth('login');
+});
+viewedNav.addEventListener('click', () => {
+  setMobileMenu(false);
+  if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openViewedPage();
   else openAuth('login');
 });
 logoutButton.addEventListener('click', () => {
@@ -776,6 +828,119 @@ let matchFiltersInitialized = false;
 const likedMatchIds = new Set();
 const messagedMatchIds = new Set();
 const likedBackIds = new Set();
+let activeConversationName = '';
+const demoProfileViews = ['Mira', 'Ari', 'Tashi'];
+function readConversations(phone = currentPhoneKey) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(messageStorageKey) || '{}');
+    return Array.isArray(saved?.[phone]) ? saved[phone] : [];
+  } catch {
+    return [];
+  }
+}
+function writeConversations(phone, conversations) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(messageStorageKey) || '{}');
+    saved[phone] = conversations;
+    localStorage.setItem(messageStorageKey, JSON.stringify(saved));
+  } catch {
+    // Keep messaging usable in memory when browser storage is unavailable.
+  }
+}
+function updateMessagesBadge() {
+  const count = currentPhoneKey ? readConversations().length : 0;
+  const badge = document.getElementById('messages-badge');
+  if (badge) badge.textContent = String(count);
+}
+function loadMessageFlags(phone) {
+  messagedMatchIds.clear();
+  readConversations(phone).forEach((conversation) => {
+    if (conversation.name && conversation.messages?.length) messagedMatchIds.add(conversation.name);
+  });
+  updateMessagesBadge();
+}
+function addSentMessage(name, text) {
+  if (!currentPhoneKey) return;
+  const conversations = readConversations();
+  let conversation = conversations.find((item) => item.name === name);
+  if (!conversation) {
+    conversation = { name, messages: [] };
+    conversations.unshift(conversation);
+  }
+  conversation.messages.push({ direction: 'sent', text: text.trim(), sentAt: new Date().toISOString() });
+  conversation.updatedAt = new Date().toISOString();
+  writeConversations(currentPhoneKey, conversations);
+  messagedMatchIds.add(name);
+  updateMessagesBadge();
+}
+function renderMessagesPage() {
+  const list = document.getElementById('conversation-list');
+  const thread = document.getElementById('conversation-thread');
+  const conversations = readConversations().sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  list.replaceChildren();
+  thread.replaceChildren();
+  if (!conversations.length) {
+    const empty = document.createElement('div');
+    empty.className = 'conversation-empty';
+    empty.textContent = 'No messages yet. Say hello to someone from Find matches.';
+    list.append(empty);
+    thread.append(empty.cloneNode(true));
+    updateMessagesBadge();
+    return;
+  }
+  if (!conversations.some((item) => item.name === activeConversationName)) activeConversationName = conversations[0].name;
+  conversations.forEach((conversation) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `conversation-item${conversation.name === activeConversationName ? ' active' : ''}`;
+    const name = document.createElement('strong');
+    name.textContent = conversation.name;
+    const preview = document.createElement('span');
+    preview.textContent = conversation.messages.at(-1)?.text || 'Start a conversation';
+    button.append(name, preview);
+    button.addEventListener('click', () => { activeConversationName = conversation.name; renderMessagesPage(); });
+    list.append(button);
+  });
+  const selected = conversations.find((item) => item.name === activeConversationName);
+  const heading = document.createElement('h2');
+  heading.textContent = selected.name;
+  const messageList = document.createElement('div');
+  messageList.className = 'message-thread-list';
+  selected.messages.forEach((message) => {
+    const bubble = document.createElement('p');
+    bubble.className = `message-bubble ${message.direction === 'sent' ? 'sent' : 'received'}`;
+    bubble.textContent = message.text;
+    messageList.append(bubble);
+  });
+  const composer = document.createElement('form');
+  composer.className = 'conversation-composer';
+  const input = document.createElement('textarea');
+  input.maxLength = 300;
+  input.rows = 2;
+  input.placeholder = `Write a follow-up to ${selected.name}…`;
+  input.setAttribute('aria-label', `Message ${selected.name}`);
+  const send = document.createElement('button');
+  send.type = 'submit';
+  send.className = 'button button-dark';
+  send.textContent = 'Send message';
+  composer.append(input, send);
+  composer.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!input.value.trim()) { input.focus(); return; }
+    addSentMessage(selected.name, input.value);
+    renderMessagesPage();
+  });
+  thread.append(heading, messageList, composer);
+  updateMessagesBadge();
+}
+function renderViewedYouPage() {
+  const results = document.getElementById('viewed-results');
+  const visitors = demoProfileViews.map((name) => demoMatches.find((match) => match.name === name)).filter(Boolean);
+  results.replaceChildren();
+  document.getElementById('viewed-count').textContent = `${visitors.length} ${visitors.length === 1 ? 'person viewed' : 'people viewed'} your profile`;
+  visitors.forEach((match) => results.append(createMatchCard(match, 'viewed')));
+}
+if (currentPhoneKey) loadMessageFlags(currentPhoneKey);
 const samplePhotoGallery = {
   Mira: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&h=1100&fit=crop&crop=faces', 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&h=750&fit=crop&crop=faces', 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&h=750&fit=crop&crop=faces'],
   Rohan: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=900&h=1100&fit=crop&crop=faces', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&h=750&fit=crop&crop=faces', 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=600&h=750&fit=crop&crop=faces'],
@@ -847,7 +1012,7 @@ function applyMatchFilters(event) {
   }
   visibleMatches.forEach((match) => results.append(createMatchCard(match)));
 }
-function createMatchCard(match) {
+function createMatchCard(match, context = 'matches') {
   const card = document.createElement('article');
   card.className = 'result-card';
   const gallery = document.createElement('div');
@@ -880,6 +1045,12 @@ function createMatchCard(match) {
   copy.className = 'result-copy';
   const title = document.createElement('h3');
   title.textContent = `${match.name}, ${match.age}`;
+  if (context === 'viewed') {
+    const viewedBadge = document.createElement('div');
+    viewedBadge.className = 'match-badge viewed-badge';
+    viewedBadge.textContent = '◉ VISITED YOUR PROFILE';
+    copy.append(viewedBadge);
+  }
   const subline = document.createElement('p');
   subline.className = 'result-subline';
   subline.textContent = `${match.job} · ${match.city} · ${match.distance} km away`;
@@ -918,7 +1089,8 @@ function createMatchCard(match) {
   pass.textContent = 'Pass';
   pass.addEventListener('click', () => {
     card.remove();
-    updateMatchResultCount('Profile passed in this preview.');
+    if (context === 'matches') updateMatchResultCount('Profile passed in this preview.');
+    else document.getElementById('viewed-action-feedback').textContent = `${match.name} was removed from your viewed list.`;
   });
   const like = document.createElement('button');
   like.type = 'button';
@@ -927,14 +1099,25 @@ function createMatchCard(match) {
   like.addEventListener('click', () => {
     likedMatchIds.add(match.name);
     card.remove();
-    updateMatchResultCount(`You liked ${match.name}; their profile is hidden from your matches.`);
+    const status = `You liked ${match.name}; their profile is hidden from your matches.`;
+    if (context === 'matches') updateMatchResultCount(status);
+    else document.getElementById('viewed-action-feedback').textContent = status;
   });
-  actions.append(pass, like);
+  const messageTrigger = document.createElement('button');
+  messageTrigger.type = 'button';
+  messageTrigger.className = 'result-message';
+  messageTrigger.textContent = 'Message';
+  actions.append(pass, like, messageTrigger);
+  const composer = document.createElement('div');
+  composer.className = 'match-message-composer';
+  composer.hidden = true;
   const messageLabel = document.createElement('label');
   messageLabel.className = 'message-label';
+  messageLabel.htmlFor = `message-${match.name.toLowerCase()}`;
   messageLabel.textContent = `Send ${match.name} a message`;
   const messageBox = document.createElement('textarea');
   messageBox.className = 'match-message-input';
+  messageBox.id = `message-${match.name.toLowerCase()}`;
   messageBox.maxLength = 300;
   messageBox.rows = 2;
   messageBox.placeholder = 'Write a kind first message…';
@@ -945,19 +1128,26 @@ function createMatchCard(match) {
   const messageStatus = document.createElement('span');
   messageStatus.className = 'message-status';
   messageStatus.setAttribute('role', 'status');
+  messageTrigger.addEventListener('click', () => {
+    composer.hidden = !composer.hidden;
+    if (!composer.hidden) messageBox.focus();
+  });
   sendMessage.addEventListener('click', () => {
     if (!messageBox.value.trim()) {
       messageStatus.textContent = 'Write a message first.';
       messageBox.focus();
       return;
     }
-    messagedMatchIds.add(match.name);
+    addSentMessage(match.name, messageBox.value);
     messageStatus.textContent = '';
     card.remove();
-    updateMatchResultCount(`Your message to ${match.name} is a preview only, and the profile is now hidden.`);
+    const status = `Your message to ${match.name} was saved in Messages; their profile is now hidden.`;
+    if (context === 'matches') updateMatchResultCount(status);
+    else document.getElementById('viewed-action-feedback').textContent = status;
     messageBox.value = '';
   });
-  copy.append(title, subline, aboutLabel, bio, interestsLabel, tags, details, actions, messageLabel, messageBox, sendMessage, messageStatus);
+  composer.append(messageLabel, messageBox, sendMessage, messageStatus);
+  copy.append(title, subline, aboutLabel, bio, interestsLabel, tags, details, actions, composer);
   card.append(gallery, copy);
   return card;
 }
@@ -1061,8 +1251,8 @@ function createLikeCard(match) {
       messageInput.focus();
       return;
     }
-    messagedMatchIds.add(match.name);
-    document.getElementById('likes-feedback').textContent = `Your message to ${match.name} is a preview only, and their profile is now hidden.`;
+    addSentMessage(match.name, messageInput.value);
+    document.getElementById('likes-feedback').textContent = `Your message to ${match.name} was saved in Messages, and their profile is now hidden.`;
     renderLikesPage();
   });
   actions.append(likeBack, messageInput, send);

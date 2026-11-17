@@ -16,7 +16,7 @@
     <a class="brand" href="#top" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
     <div class="mobile-drawer" id="mobile-drawer" aria-hidden="false">
       <nav class="main-nav" aria-label="Main navigation">
-        <button id="find-matches-nav" class="nav-match-trigger hidden" type="button">Find matches</button><button id="likes-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Likes <span id="likes-badge">3</span></button><button id="profile-nav" class="nav-match-trigger hidden" type="button">Profile</button>
+        <button id="find-matches-nav" class="nav-match-trigger hidden" type="button">Find matches</button><button id="likes-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Likes <span id="likes-badge">3</span></button><button id="messages-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Messages <span id="messages-badge">0</span></button><button id="viewed-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Viewed you <span id="viewed-badge">3</span></button><button id="profile-nav" class="nav-match-trigger hidden" type="button">Profile</button>
       </nav>
       <div class="nav-actions"><button class="login-link auth-trigger" data-auth-mode="login">Log in</button><button class="button button-dark button-small auth-trigger" data-auth-mode="register">Create account <span>↗</span></button><button id="logout-button" class="login-link hidden" type="button">Log out</button></div>
     </div>
@@ -162,6 +162,23 @@
         <div class="profile-page-copy"><div class="section-kicker">ABOUT ME</div><p id="profile-display-bio" class="profile-display-bio"></p><div class="section-kicker">INTERESTS</div><div id="profile-display-interests" class="result-tags"></div><dl id="profile-display-details" class="profile-display-details"></dl></div>
       </div>
       <p class="profile-storage-note">Profile details are saved in this browser for the demo. Photo selections are temporary and may need to be added again after a reload.</p>
+    </div>
+  </section>
+  <section id="messages-page" class="activity-page" hidden>
+    <div class="activity-page-wrap section-wrap">
+      <div class="section-kicker">KEEP THE CONVERSATION GOING</div><h1>Messages</h1>
+      <p class="activity-intro">Messages you send are saved here in this browser preview.</p>
+      <div class="messages-layout"><div id="conversation-list" class="conversation-list"></div><div id="conversation-thread" class="conversation-thread"></div></div>
+      <p class="activity-demo-note">Demo only: messages are stored locally and aren’t delivered to another person until a messaging backend is connected.</p>
+    </div>
+  </section>
+  <section id="viewed-page" class="activity-page" hidden>
+    <div class="activity-page-wrap section-wrap">
+      <div class="section-kicker">A LITTLE CURIOSITY</div><h1>Viewed you</h1>
+      <p class="activity-intro">Explore people who stopped by your profile. These sample visits are here for the preview.</p>
+      <div class="activity-summary"><span id="viewed-count">3 people viewed your profile</span></div>
+      <div id="viewed-action-feedback" class="match-action-feedback" role="status" aria-live="polite"></div>
+      <div id="viewed-results" class="match-results"></div>
     </div>
   </section>
   <script src="script.js"></script>
