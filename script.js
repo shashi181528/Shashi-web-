@@ -1028,6 +1028,7 @@ function renderSubscriptionPage() {
     const description = document.createElement('p'); description.textContent = plan.description || 'A little more freedom to find your person.';
     const features = document.createElement('ul');
     Object.entries(premiumFeatureLabels).forEach(([feature, label]) => { if (plan.features?.includes(feature)) { const li = document.createElement('li'); li.textContent = `✓ ${label}`; features.append(li); } });
+    (plan.customFeatures || []).forEach((feature) => { const li = document.createElement('li'); li.textContent = `✓ ${feature}`; features.append(li); });
     const button = document.createElement('button'); button.type = 'button'; button.className = 'button button-dark';
     const isCurrent = current?.planId === plan.id;
     button.textContent = isCurrent ? 'Current plan' : currentPhoneKey ? 'Activate demo subscription' : 'Sign in to subscribe';
