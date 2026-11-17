@@ -62,6 +62,7 @@ const messageStorageKey = 'goodkind-demo-conversations';
 const planOffersStorageKey = 'goodkind-demo-plan-offers';
 const accountSubscriptionsStorageKey = 'goodkind-demo-account-subscriptions';
 const likesUsageStorageKey = 'goodkind-demo-likes-usage';
+const freeDailyLikeLimit = 5;
 const registeredPhones = new Set(readRegisteredPhones());
 let authMode = 'register';
 let editProfileMode = false;
@@ -938,7 +939,6 @@ const messagedMatchIds = new Set();
 const likedBackIds = new Set();
 const passedMatchIds = new Set();
 const passedHistory = [];
-const freeDailyLikeLimit = 5;
 let subscriptionNotice = '';
 const premiumFeatureLabels = {
   rewind: 'Rewind passed profiles',
