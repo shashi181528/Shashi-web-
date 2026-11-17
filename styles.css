@@ -41,5 +41,55 @@ html:not(.admin-authenticated) body.admin-locked{visibility:hidden}
 #admin-login-form .button:disabled{opacity:.65;cursor:wait}
 .admin-login-card .admin-auth-note{padding-top:13px;margin-top:17px;border-top:1px solid #e9e5dc;font-size:9px;color:#82857d}
 @media(max-width:560px){.admin-login-page{padding:35px 18px}.admin-login-card{padding:24px}.admin-header-actions{gap:10px}.admin-header-actions .admin-main-link{font-size:10px}}
+
+/* Refined admin typography and layout. */
+.admin-page,.admin-login-body{font-family:'Manrope',sans-serif;color:#293b31;background:radial-gradient(ellipse at 12% 10%,#e8eee5 0,transparent 32%),linear-gradient(145deg,#f7f7f1 0%,#f1eee5 100%)}
+.admin-page-wrap{max-width:1060px}
+.admin-page-wrap>.section-kicker,.admin-login-card>.section-kicker{font:800 10px/1.2 'Manrope',sans-serif;letter-spacing:.2em;color:#71816f}
+.admin-page-wrap>h1,.admin-login-card h1{font:400 clamp(44px,6vw,68px)/.98 'DM Serif Display',Georgia,serif;letter-spacing:-1.2px;color:#233d30}
+.admin-page-wrap>h1 em,.admin-login-card h1 em{font-style:italic;color:#b77262}
+.admin-intro,.admin-login-card>p{font:500 13px/1.8 'Manrope',sans-serif;color:#6e786e}
+.admin-preview-note{border-radius:12px;padding:14px 17px;background:#fbf4e6;border-color:#ead9b9;color:#766348;font:500 11px/1.7 'Manrope',sans-serif}
+.admin-panel{margin-top:18px;padding:25px;background:#fffefa;border:1px solid #e6e8df;border-radius:17px;box-shadow:0 12px 32px #213d2a0a}
+.admin-panel h2{font:400 25px/1.2 'DM Serif Display',Georgia,serif;color:#294436;letter-spacing:-.25px;margin:0 0 20px}
+.admin-form-grid{gap:16px}
+.admin-form-grid label,.admin-grant-form label,.admin-feature-list legend,.admin-feature-list label{font:700 10px/1.4 'Manrope',sans-serif;letter-spacing:.025em;color:#57685a}
+.admin-form-grid input,.admin-form-grid select,.admin-grant-form select{height:45px;padding:0 13px;border-radius:9px;border-color:#dfe4da;background:#fcfcf8;font:500 12px 'Manrope',sans-serif;transition:border-color .18s,box-shadow .18s}
+.admin-form-grid input:focus,.admin-form-grid select:focus,.admin-grant-form select:focus{outline:0;border-color:#819881;box-shadow:0 0 0 3px #81988122}
+.admin-feature-list{gap:10px 13px;margin:20px 0}
+.admin-feature-list label{padding:9px 11px;border:1px solid #e6e9e0;border-radius:999px;background:#f9faf6}
+.admin-feature-list input{accent-color:#486b53}
+.admin-custom-benefits{border:1px solid #e6e9e0;border-radius:12px;padding:15px;background:#fafbf7}
+.admin-custom-benefits legend{padding:0 6px;font:700 10px 'Manrope',sans-serif;letter-spacing:.03em;color:#57685a}
+.admin-benefit-entry input{height:42px;border:1px solid #dfe4da;border-radius:9px;padding:0 12px;font:500 12px 'Manrope',sans-serif}
+.admin-benefit-entry input:focus{outline:0;border-color:#819881;box-shadow:0 0 0 3px #81988122}
+.admin-secondary-button{padding:9px 12px;border:1px solid #dce3d8;background:#f7f9f4;color:#405a46;border-radius:8px;font:700 10px 'Manrope',sans-serif;transition:background .18s,border-color .18s,transform .18s}
+.admin-secondary-button:hover{background:#edf2e9;border-color:#cbd8c9;transform:translateY(-1px)}
+.admin-secondary-button.danger{color:#96554b}
+.admin-panel .button,.admin-grant-form .button,#admin-login-form .button{height:46px;border-radius:9px;font:800 10px 'Manrope',sans-serif;letter-spacing:.04em;box-shadow:0 8px 16px #243b2a18}
+.admin-editor-actions{display:flex;align-items:center;gap:10px;margin-top:17px}
+.admin-plan-list,.admin-subscriber-list{gap:10px}
+.admin-plan-row{padding:14px 15px;border:1px solid #e6e9e0;border-radius:12px;background:#fcfcf9;gap:9px}
+.admin-plan-row strong{font:800 11px 'Manrope',sans-serif;color:#344d3c}
+.admin-plan-row span{font:500 10px/1.6 'Manrope',sans-serif;color:#788078}
+.admin-empty{padding:8px 0;font:500 11px 'Manrope',sans-serif;color:#788078}
+.admin-feedback{font:600 10px 'Manrope',sans-serif}
+.admin-header{background:#fbfbf7eF;backdrop-filter:blur(12px);border-bottom:1px solid #dfe5dc}
+.admin-header .brand{font-family:'Manrope',sans-serif;font-weight:800;letter-spacing:-.06em}
+.admin-header-actions .admin-secondary-button{box-shadow:none}
+.admin-login-body{background:radial-gradient(ellipse at 20% 25%,#dfe9dd 0,transparent 36%),radial-gradient(ellipse at 85% 82%,#f0dfd4 0,transparent 29%),#f7f7f1}
+.admin-login-page{padding:72px 20px}
+.admin-login-card{position:relative;overflow:hidden;width:min(100%,500px);padding:42px;background:#fffefaed;border:1px solid #e5e9e0;border-radius:23px;box-shadow:0 28px 80px #263f3517}
+.admin-login-card::before{content:"g";position:absolute;right:22px;top:2px;color:#eff2eb;font:400 190px/.9 'DM Serif Display',Georgia,serif;pointer-events:none}
+.admin-login-card>*{position:relative}
+.admin-login-card h1{font-size:clamp(42px,6vw,56px);margin:17px 0 13px}
+.admin-login-card>p{font-size:12px}
+#admin-login-form{gap:10px;margin-top:25px}
+#admin-login-form label{font:800 10px 'Manrope',sans-serif;letter-spacing:.035em;color:#526456}
+#admin-login-form input{height:47px;padding:0 14px;border:1px solid #dfe4da;border-radius:9px;background:#fcfcf8;font:500 12px 'Manrope',sans-serif}
+#admin-login-form input:focus{outline:0;border-color:#819881;box-shadow:0 0 0 3px #81988122}
+#admin-login-form .button{margin-top:7px}
+.admin-login-card .admin-auth-note{padding:14px 0 0;margin-top:18px;border-top:1px solid #e9ece4;font:500 9px/1.7 'Manrope',sans-serif;color:#828a80}
+@media(max-width:560px){.admin-panel{padding:19px;border-radius:14px}.admin-login-card{padding:30px 23px;border-radius:18px}.admin-login-card::before{right:12px;top:17px;font-size:140px}.admin-header-actions{gap:8px}}
 .admin-editor-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.admin-editor-actions [hidden]{display:none!important}
 .admin-custom-benefits{border:0;padding:0;margin:2px 0 17px}.admin-custom-benefits legend{margin-bottom:7px;color:#50594f;font-size:10px;font-weight:600}.admin-benefit-entry{display:flex;gap:8px;max-width:560px}.admin-benefit-entry input{flex:1;min-width:0;height:39px;padding:0 10px;border:1px solid #dcd8cf;background:#fffefa;font-size:10px}.admin-custom-feature-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}.admin-custom-feature-chip{display:inline-flex;align-items:center;gap:7px;padding:4px 8px;border-radius:20px;background:#e9eee6;color:#465749;font-size:9px}.admin-custom-feature-chip button{border:0;background:none;padding:0;color:#92594f;font-size:14px;line-height:1;cursor:pointer}.admin-custom-benefits .field-hint{display:block;margin-top:5px;font-size:9px;color:#83867e}@media(max-width:560px){.admin-benefit-entry{flex-direction:column}.admin-benefit-entry button{align-self:flex-start}}
