@@ -27,6 +27,7 @@ function setMobileMenu(open) {
 }
 window.addEventListener('resize', () => {
   const isMobile = window.matchMedia('(max-width: 620px)').matches;
+  if (!isMobile && siteHeader.classList.contains('menu-open')) setMobileMenu(false);
   mobileDrawer.setAttribute('aria-hidden', String(isMobile && !siteHeader.classList.contains('menu-open')));
 });
 menuButton.addEventListener('click', () => {
