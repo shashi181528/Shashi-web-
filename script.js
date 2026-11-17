@@ -432,6 +432,7 @@ const locationSearch = document.getElementById('location-search');
 const locationSuggestions = document.getElementById('location-suggestions');
 const locationStatus = document.getElementById('location-status');
 const useTypedLocation = document.getElementById('manual-location-use');
+const requestLocationButton = document.getElementById('request-location-button');
 const MAPTILER_API_KEY = 'beeea696c45347548d0f25ca20297a91';
 let locationSearchTimer;
 let locationSearchController;
@@ -448,7 +449,51 @@ function formatPlace(feature) {
   const properties = feature.properties || {};
   const local = feature.text || properties.name || properties.street || properties.city || properties.district || 'Place';
   const context = (feature.context || []).map((item) => item.text).filter(Boolean);
-  return [...new Set([local, ...context])].join(', ');
+  const photonContext = [properties.city, properties.district, properties.state, properties.country].filter(Boolean);
+  return [...new Set([local, ...context, ...photonContext])].join(', ');
+}
+async function requestPlaceSuggestions(query, signal) {
+  let mapTilerError;
+  try {
+    const mapTilerParams = new URLSearchParams({ key: MAPTILER_API_KEY, limit: '6', language: 'en', autocomplete: 'true' });
+    if (profile.location?.latitude != null && profile.location?.longitude != null) {
+      mapTilerParams.set('proximity', `${profile.location.longitude},${profile.location.latitude}`);
+    }
+    const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?${mapTilerParams}`, { signal });
+    if (!response.ok) throw new Error(`MapTiler returned ${response.status}`);
+    const data = await response.json();
+    if (data.features?.length) return data.features;
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    mapTilerError = error;
+  }
+  const photonParams = new URLSearchParams({ q: query, limit: '6', lang: 'en' });
+  if (profile.location?.latitude != null && profile.location?.longitude != null) {
+    photonParams.set('lat', String(profile.location.latitude));
+    photonParams.set('lon', String(profile.location.longitude));
+  }
+  const photonResponse = await fetch(`https://photon.komoot.io/api/?${photonParams}`, { signal });
+  if (!photonResponse.ok) throw mapTilerError || new Error('Place search is unavailable.');
+  const photonData = await photonResponse.json();
+  return photonData.features || [];
+}
+async function reverseGeocode(latitude, longitude) {
+  try {
+    const params = new URLSearchParams({ key: MAPTILER_API_KEY, limit: '1', language: 'en' });
+    const response = await fetch(`https://api.maptiler.com/geocoding/${longitude},${latitude}.json?${params}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.features?.[0]) return formatPlace(data.features[0]);
+    }
+  } catch {
+    // Try the OpenStreetMap based fallback if MapTiler is unavailable.
+  }
+  const params = new URLSearchParams({ lat: String(latitude), lon: String(longitude), lang: 'en' });
+  const response = await fetch(`https://photon.komoot.io/reverse?${params}`);
+  if (!response.ok) throw new Error('Could not find a nearby place name. You can enter your area manually.');
+  const data = await response.json();
+  if (!data.features?.[0]) throw new Error('Could not find a nearby place name. You can enter your area manually.');
+  return formatPlace(data.features[0]);
 }
 function renderLocationOptions(features) {
   locationOptions = features.filter((feature) => feature?.geometry?.coordinates?.length === 2 && (feature?.place_name || feature?.text || feature?.properties));
@@ -505,23 +550,46 @@ locationSearch.addEventListener('input', () => {
   locationSearchTimer = setTimeout(async () => {
     locationSearchController = new AbortController();
     try {
-      const params = new URLSearchParams({ key: MAPTILER_API_KEY, limit: '6', language: 'en', autocomplete: 'true' });
-      const response = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?${params}`, { signal: locationSearchController.signal });
-      if (!response.ok) throw new Error(response.status === 403
-        ? location.protocol === 'file:'
-          ? 'MapTiler rejected the local file preview. Open this site from http://localhost and allow localhost in the key’s domain settings.'
-          : 'MapTiler rejected this API key. Check that it is active and allows this site origin.'
-        : 'MapTiler could not load place suggestions. Please try again.');
-      const data = await response.json();
+      const features = await requestPlaceSuggestions(query, locationSearchController.signal);
       if (locationSearch.value.trim() !== query) return;
-      renderLocationOptions(data.features || []);
+      renderLocationOptions(features);
       locationStatus.textContent = locationOptions.length ? 'Choose a suggested place to use it for nearby matches.' : 'No matching areas found.';
     } catch (error) {
       if (error.name === 'AbortError') return;
       hideLocationSuggestions();
-      locationStatus.textContent = `${error.message || 'Could not load suggestions.'} Check your connection or try a more specific area.`;
+      locationStatus.textContent = 'Place suggestions could not load. Check your connection or enter your area manually.';
     }
   }, 450);
+});
+requestLocationButton.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    locationStatus.textContent = 'This browser does not support location access. Enter your city or nearby area instead.';
+    return;
+  }
+  requestLocationButton.disabled = true;
+  locationStatus.textContent = 'Allow location access in your browser to find nearby areas…';
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    const { latitude, longitude } = position.coords;
+    try {
+      const label = await reverseGeocode(latitude, longitude);
+      profile.location = { latitude, longitude, label, source: 'device' };
+      locationSearch.value = label;
+      locationStatus.textContent = `Nearby area selected: ${label}`;
+      locationStatus.classList.add('ok');
+      useTypedLocation.hidden = true;
+      hideLocationSuggestions();
+    } catch (error) {
+      locationStatus.textContent = error.message || 'Could not find your nearby area. Enter it manually.';
+    } finally {
+      requestLocationButton.disabled = false;
+    }
+  }, (error) => {
+    requestLocationButton.disabled = false;
+    const message = error.code === 1
+      ? 'Location access was not allowed. You can enter your city or nearby area instead.'
+      : 'Could not read your location. Check your browser settings or enter your area manually.';
+    locationStatus.textContent = message;
+  }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
 });
 useTypedLocation.addEventListener('click', () => {
   const label = locationSearch.value.trim();
@@ -740,7 +808,6 @@ function populateProfileEditor() {
   document.getElementById('location-search').value = profile.locationLabel || '';
   document.getElementById('location-status').textContent = profile.locationLabel ? `Location entered: ${profile.locationLabel}` : 'Location not added yet.';
   document.getElementById('location-status').classList.toggle('ok', Boolean(profile.locationLabel));
-  document.getElementById('adult-confirm').checked = true;
   document.querySelectorAll('#interest-options input[name="interest"]').forEach((input) => { input.checked = (profile.interests || []).includes(input.value); });
   document.getElementById('interest-count').textContent = `${(profile.interests || []).length} of 5 selected`;
   document.querySelectorAll('#language-options input[name="language"]').forEach((input) => { input.checked = false; });
