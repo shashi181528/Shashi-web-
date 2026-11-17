@@ -14,10 +14,13 @@
 <body>
   <header class="site-header">
     <a class="brand" href="#top" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
-    <nav class="main-nav" aria-label="Main navigation">
-      <button id="find-matches-nav" class="nav-match-trigger hidden" type="button">Find matches</button><button id="likes-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Likes <span id="likes-badge">3</span></button>
-    </nav>
-    <div class="nav-actions"><button class="login-link auth-trigger" data-auth-mode="login">Log in</button><button class="button button-dark button-small auth-trigger" data-auth-mode="register">Create account <span>↗</span></button><button id="logout-button" class="login-link hidden" type="button">Log out</button></div>
+    <div class="mobile-drawer" id="mobile-drawer" aria-hidden="false">
+      <nav class="main-nav" aria-label="Main navigation">
+        <button id="find-matches-nav" class="nav-match-trigger hidden" type="button">Find matches</button><button id="likes-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Likes <span id="likes-badge">3</span></button>
+      </nav>
+      <div class="nav-actions"><button class="login-link auth-trigger" data-auth-mode="login">Log in</button><button class="button button-dark button-small auth-trigger" data-auth-mode="register">Create account <span>↗</span></button><button id="logout-button" class="login-link hidden" type="button">Log out</button></div>
+    </div>
+    <button class="menu-backdrop" type="button" aria-label="Close menu" tabindex="-1"></button>
     <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
   </header>
 

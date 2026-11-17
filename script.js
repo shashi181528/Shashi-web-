@@ -15,11 +15,25 @@ document.querySelectorAll('.gender-option').forEach((button) => {
   });
 });
 const menuButton = document.querySelector('.menu-toggle');
-menuButton.addEventListener('click', () => {
-  const header = document.querySelector('.site-header');
-  const open = header.classList.toggle('menu-open');
+const siteHeader = document.querySelector('.site-header');
+const mobileDrawer = document.getElementById('mobile-drawer');
+const menuBackdrop = document.querySelector('.menu-backdrop');
+function setMobileMenu(open) {
+  siteHeader.classList.toggle('menu-open', open);
   menuButton.setAttribute('aria-expanded', String(open));
+  menuButton.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  const isMobile = window.matchMedia('(max-width: 620px)').matches;
+  mobileDrawer.setAttribute('aria-hidden', String(isMobile && !open));
+}
+window.addEventListener('resize', () => {
+  const isMobile = window.matchMedia('(max-width: 620px)').matches;
+  mobileDrawer.setAttribute('aria-hidden', String(isMobile && !siteHeader.classList.contains('menu-open')));
 });
+menuButton.addEventListener('click', () => {
+  setMobileMenu(!siteHeader.classList.contains('menu-open'));
+});
+menuBackdrop.addEventListener('click', () => setMobileMenu(false));
+setMobileMenu(false);
 const overlay = document.getElementById('auth-overlay');
 const landingMain = document.getElementById('top');
 const matchesPage = document.getElementById('matches-page');
@@ -164,18 +178,15 @@ function openLikesPage() {
 }
 document.querySelectorAll('.main-nav a, .site-footer a, .site-header .brand').forEach((link) => link.addEventListener('click', () => {
   if (!matchesPage.hidden) showLandingPage();
-  document.querySelector('.site-header').classList.remove('menu-open');
-  menuButton.setAttribute('aria-expanded', 'false');
+  setMobileMenu(false);
 }));
 findMatchesNav.addEventListener('click', () => {
-  document.querySelector('.site-header').classList.remove('menu-open');
-  menuButton.setAttribute('aria-expanded', 'false');
+  setMobileMenu(false);
   if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openMatchesPage();
   else openAuth('login');
 });
 likesNav.addEventListener('click', () => {
-  document.querySelector('.site-header').classList.remove('menu-open');
-  menuButton.setAttribute('aria-expanded', 'false');
+  setMobileMenu(false);
   if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openLikesPage();
   else openAuth('login');
 });
@@ -192,9 +203,16 @@ logoutButton.addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 document.getElementById('footer-match-trigger').addEventListener('click', () => findMatchesNav.click());
-document.querySelectorAll('.auth-trigger').forEach((button) => button.addEventListener('click', () => openAuth(button.dataset.authMode || 'register')));
+document.querySelectorAll('.auth-trigger').forEach((button) => button.addEventListener('click', () => {
+  setMobileMenu(false);
+  openAuth(button.dataset.authMode || 'register');
+}));
 document.querySelector('.auth-close').addEventListener('click', closeAuth);
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && overlay.classList.contains('open')) closeAuth(); });
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  if (overlay.classList.contains('open')) closeAuth();
+  if (siteHeader.classList.contains('menu-open')) setMobileMenu(false);
+});
 document.querySelector('.back-to-phone').addEventListener('click', () => showPanel('phone-form', 0));
 document.querySelectorAll('.back-to-profile').forEach((button) => button.addEventListener('click', () => showPanel('profile-form', 2)));
 document.querySelector('.back-to-details').addEventListener('click', () => showPanel('details-form', 3));
@@ -579,12 +597,12 @@ function showMatches() {
 }
 const filterToggle = document.getElementById('filter-toggle');
 const matchFilterPanel = document.getElementById('match-filter-panel');
-filterToggle.addEventListener('click', () => {
-  const open = matchFilterPanel.hidden;
+function setMatchFilterPanelOpen(open) {
   matchFilterPanel.hidden = !open;
   filterToggle.setAttribute('aria-expanded', String(open));
   document.getElementById('filter-toggle-icon').textContent = open ? '−' : '＋';
-});
+}
+filterToggle.addEventListener('click', () => setMatchFilterPanelOpen(matchFilterPanel.hidden));
 function applyMatchFilters(event) {
   if (event) event.preventDefault();
   const minAge = Number(document.getElementById('filter-age-min').value) || 18;
@@ -605,6 +623,7 @@ function applyMatchFilters(event) {
     countLabel.textContent = 'Enter a valid age range (18–99).';
     return;
   }
+  setMatchFilterPanelOpen(false);
   visibleMatches = demoMatches.filter((match) => {
     const genderMatch = gender === 'Everyone'
       || (gender === 'Women' && match.gender === 'Woman')
