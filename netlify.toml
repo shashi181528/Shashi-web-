@@ -1,0 +1,4 @@
+[build]
+  # Serve the static files directly; override the Jekyll command in the UI.
+  command = ""
+  publish = "."
