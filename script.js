@@ -53,12 +53,24 @@ let currentMatchIndex = 0;
 let visibleMatches = [];
 const logoutButton = document.getElementById('logout-button');
 const loginButtons = [...document.querySelectorAll('.nav-actions .auth-trigger')];
+const heroMatchTrigger = document.getElementById('hero-match-trigger');
+const joinRegisterButton = document.getElementById('join-register-trigger');
+const joinRegisterMessage = document.getElementById('join-register-message');
+function syncRegistrationCallToAction() {
+  const registrationComplete = registeredPhones.size > 0;
+  joinRegisterButton.disabled = registrationComplete;
+  joinRegisterButton.textContent = registrationComplete ? 'Registration complete ✓' : 'Sign up with your mobile number ↗';
+  joinRegisterMessage.textContent = registrationComplete
+    ? 'Your account is ready. Use Find matches or Log in above.'
+    : 'Your number is used to sign in and verify your account.';
+}
 function syncAccountNavigation() {
   const signedIn = Boolean(currentPhoneKey && registeredPhones.has(currentPhoneKey));
   findMatchesNav.classList.toggle('hidden', !signedIn);
   likesNav.classList.toggle('hidden', !signedIn);
   logoutButton.classList.toggle('hidden', !signedIn);
   loginButtons.forEach((button) => button.classList.toggle('hidden', signedIn));
+  syncRegistrationCallToAction();
 }
 function readRegisteredPhones() {
   try {
@@ -205,6 +217,10 @@ logoutButton.addEventListener('click', () => {
 document.getElementById('footer-match-trigger').addEventListener('click', () => findMatchesNav.click());
 document.querySelectorAll('.auth-trigger').forEach((button) => button.addEventListener('click', () => {
   setMobileMenu(false);
+  if (button === heroMatchTrigger && currentPhoneKey && registeredPhones.has(currentPhoneKey)) {
+    openMatchesPage();
+    return;
+  }
   openAuth(button.dataset.authMode || 'register');
 }));
 document.querySelector('.auth-close').addEventListener('click', closeAuth);
