@@ -438,7 +438,6 @@ const locationSuggestions = document.getElementById('location-suggestions');
 const locationStatus = document.getElementById('location-status');
 const useTypedLocation = document.getElementById('manual-location-use');
 const requestLocationButton = document.getElementById('request-location-button');
-const MAPTILER_API_KEY = 'beeea696c45347548d0f25ca20297a91';
 let locationSearchTimer;
 let locationSearchController;
 let locationOptions = [];
@@ -454,7 +453,7 @@ function formatPlace(feature) {
   const properties = feature.properties || {};
   const local = feature.text || properties.name || properties.street || properties.city || properties.district || 'Place';
   const context = (feature.context || []).map((item) => item.text).filter(Boolean);
-  const photonContext = [properties.city, properties.district, properties.state, properties.country].filter(Boolean);
+  const photonContext = [properties.city, properties.district, properties.county, properties.state, properties.country].filter(Boolean);
   return [...new Set([local, ...context, ...photonContext])].join(', ');
 }
 async function requestPlaceSuggestions(query, signal) {
@@ -469,22 +468,24 @@ async function requestPlaceSuggestions(query, signal) {
   return photonData.features || [];
 }
 async function reverseGeocode(latitude, longitude) {
-  try {
-    const params = new URLSearchParams({ key: MAPTILER_API_KEY, limit: '1', language: 'en' });
-    const response = await fetch(`https://api.maptiler.com/geocoding/${longitude},${latitude}.json?${params}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (data.features?.[0]) return formatPlace(data.features[0]);
-    }
-  } catch {
-    // Try the OpenStreetMap based fallback if MapTiler is unavailable.
-  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
   const params = new URLSearchParams({ lat: String(latitude), lon: String(longitude), lang: 'en' });
-  const response = await fetch(`https://photon.komoot.io/reverse?${params}`);
-  if (!response.ok) throw new Error('Could not find a nearby place name. You can enter your area manually.');
-  const data = await response.json();
-  if (!data.features?.[0]) throw new Error('Could not find a nearby place name. You can enter your area manually.');
-  return formatPlace(data.features[0]);
+  try {
+    const response = await fetch(`https://photon.komoot.io/reverse?${params}`, { signal: controller.signal });
+    if (!response.ok) throw new Error('Could not find a nearby place name. You can enter your area manually.');
+    const data = await response.json();
+    const feature = data.features?.[0];
+    if (!feature) throw new Error('Could not find a nearby place name. You can enter your area manually.');
+    const label = formatPlace(feature);
+    if (label === 'Place') throw new Error('Could not identify a nearby area. You can enter it manually.');
+    return label;
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('Location lookup timed out. Please try again or enter your area manually.');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 function renderLocationOptions(features) {
   locationOptions = features.filter((feature) => feature?.geometry?.coordinates?.length === 2 && (feature?.place_name || feature?.text || feature?.properties));
