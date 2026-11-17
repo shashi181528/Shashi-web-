@@ -9,11 +9,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=membership-admin-20261117">
+  <script src="admin-auth.js"></script>
+  <script>
+    if (!window.GoodkindAdminAuth?.isSignedIn()) location.replace('admin-login.html');
+    else document.documentElement.classList.add('admin-authenticated');
+  </script>
 </head>
-<body>
+<body class="admin-locked">
   <header class="site-header admin-header">
     <a class="brand" href="index.html" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
-    <a class="admin-main-link" href="index.html">← Back to Goodkind</a>
+    <div class="admin-header-actions"><a class="admin-main-link" href="index.html">← Back to Goodkind</a><button class="admin-secondary-button" id="admin-logout" type="button">Log out</button></div>
   </header>
   <main class="admin-page">
     <div class="admin-page-wrap section-wrap">
@@ -43,5 +48,6 @@
     </div>
   </main>
   <script src="admin.js"></script>
+  <script>document.getElementById('admin-logout')?.addEventListener('click', () => { window.GoodkindAdminAuth.signOut(); location.replace('admin-login.html'); });</script>
 </body>
 </html>

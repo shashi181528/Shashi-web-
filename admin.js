@@ -1,3 +1,8 @@
+if (!window.GoodkindAdminAuth?.isSignedIn()) {
+  window.location.replace('admin-login.html');
+  throw new Error('Admin sign-in required.');
+}
+
 const planOffersStorageKey = 'goodkind-demo-plan-offers';
 const registeredPhonesStorageKey = 'goodkind-demo-registered-phones';
 const profileStorageKey = 'goodkind-demo-profiles';
