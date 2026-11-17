@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f4ee" />
+  <meta name="description" content="Meet people who feel like your kind of people. A more thoughtful, inclusive way to date." />
+  <title>Goodkind — meet with intention</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button id="find-matches-nav" class="nav-match-trigger hidden" type="button">Find matches</button><button id="likes-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Likes <span id="likes-badge">3</span></button>
+    </nav>
+    <div class="nav-actions"><button class="login-link auth-trigger" data-auth-mode="login">Log in</button><button class="button button-dark button-small auth-trigger" data-auth-mode="register">Create account <span>↗</span></button><button id="logout-button" class="login-link hidden" type="button">Log out</button></div>
+    <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+  </header>
+
+  <main id="top">
+    <section class="hero section-wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> DATING, WITH A LITTLE MORE HEART</div>
+        <h1>Meet someone.<br><em>Feel something.</em></h1>
+        <p class="hero-lede">Good connections start when you can show up as your whole self. Meet people who are here for the same reason you are.</p>
+        <div class="hero-actions"><button data-auth-mode="register" class="button button-dark auth-trigger">Find your kind of person <span>↗</span></button><div class="social-proof"><div class="avatar-stack"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=90&h=90&fit=crop&crop=faces" alt=""><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=90&h=90&fit=crop&crop=faces" alt=""><img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=90&h=90&fit=crop&crop=faces" alt=""></div><span>For all the ways you show up.</span></div></div>
+        <div class="hero-note"><span class="sparkle">✳</span><span>Less swiping. More <i>oh, you too?</i></span></div>
+      </div>
+      <div class="hero-visual" aria-label="People enjoying a date">
+        <div class="hero-photo"></div><div class="photo-label"><span class="online-dot"></span> Here for the real thing</div>
+        <div class="floating-note note-top"><span class="note-icon">♡</span><span>Good chemistry<br><small>starts with good conversation</small></span></div>
+        <div class="floating-note note-bottom"><span class="mini-hearts">✿</span><span>More you.<br><small>Less pretending.</small></span></div>
+        <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span>
+      </div>
+    </section>
+
+    <section class="ticker" aria-label="Our promise"><div>GOOD PEOPLE, GOOD INTENTIONS <span>✳</span> REAL TALK, REAL CONNECTION <span>✳</span> A PLACE FOR EVERY YOU <span>✳</span> GOOD PEOPLE, GOOD INTENTIONS <span>✳</span> REAL TALK, REAL CONNECTION <span>✳</span></div></section>
+
+    
+
+    
+
+    
+
+    <section class="quote-section"><div class="quote-mark">“</div><blockquote>Turns out, the best thing about dating<br>is when it stops feeling like dating.</blockquote><p>— THE GOODKIND IDEA</p><div class="quote-flower">✿</div></section>
+
+    <section id="join" class="join-section section-wrap"><div class="join-card"><div class="join-copy"><div class="section-kicker light-kicker">A GOOD THING IS GROWING</div><h2>Come as you are.<br><em>Meet who you are.</em></h2><p>Start with your mobile number. Build your profile with the details that help make a thoughtful connection.</p></div><div class="join-form"><button class="button button-light auth-trigger" data-auth-mode="register">Sign up with your mobile number <span>↗</span></button><span class="form-message">Your number is used to sign in and verify your account.</span></div><span class="join-flower">✳</span></div></section>
+  </main>
+  <footer class="site-footer section-wrap"><a class="brand" href="#top"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a><span>Made for the good in all of us.</span><div><button class="footer-match-trigger" id="footer-match-trigger" type="button">Find matches</button><span>© 2026 Goodkind</span></div></footer>
+  <div class="auth-overlay" id="auth-overlay" aria-hidden="true">
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      <button class="auth-close" aria-label="Close sign up">×</button>
+      <div class="auth-brand"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></div>
+      <div class="auth-progress"><span class="progress-step current"></span><span class="progress-step"></span><span class="progress-step"></span><span class="progress-step"></span><span class="progress-step"></span></div>
+      <form id="phone-form" class="auth-panel">
+        <div class="section-kicker">A GOOD PLACE TO START</div><h2 id="auth-title">Your number,<br><em>your next chapter.</em></h2>
+        <p class="auth-description">Sign in or create an account with your mobile number. We’ll send a one-time code to verify it.</p>
+        <label for="phone-number">Mobile number</label><div class="phone-input"><select aria-label="Country calling code" id="country-code"><option value="+91">🇮🇳 +91</option><option value="+1">🇺🇸 +1</option><option value="+44">🇬🇧 +44</option><option value="+61">🇦🇺 +61</option></select><input id="phone-number" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="98765 43210" required minlength="7"></div>
+        <div class="auth-alert" id="auth-alert" role="alert" hidden><span id="auth-alert-message"></span><button id="auth-alert-action" type="button">Register for an account</button></div>
+        <button class="button button-dark auth-submit" type="submit">Send verification code <span>→</span></button><div class="auth-error" aria-live="polite"></div>
+        <p class="auth-legal">By continuing, you agree to our Terms and Privacy Policy. Standard SMS rates may apply.</p>
+      </form>
+      <form id="otp-form" class="auth-panel hidden">
+        <div class="section-kicker">JUST A QUICK CHECK</div><h2 id="otp-title">Check your<br><em>messages.</em></h2><p class="auth-description">Enter the 6-digit verification code sent to <strong id="phone-display"></strong>.</p>
+        <label for="otp-code">Verification code</label><input class="otp-input" id="otp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required pattern="[0-9]{6}">
+        <button class="button button-dark auth-submit" type="submit">Verify number <span>→</span></button><div class="auth-error" aria-live="polite"></div><button class="text-button back-to-phone" type="button">← Change mobile number</button>
+      </form>
+      <form id="profile-form" class="auth-panel hidden">
+        <div class="section-kicker">YOUR PROFILE, YOUR RULES</div><h2>Let’s make it<br><em>feel like you.</em></h2><p class="auth-description">These details help us introduce you to compatible people. Your exact location is never shown on your public profile.</p>
+        <div class="profile-fields">
+          <div class="field-pair"><div><label for="profile-name">Name</label><input id="profile-name" name="name" autocomplete="name" placeholder="What should we call you?" required maxlength="40"></div><div><label for="profile-age">Age</label><input id="profile-age" name="age" type="text" inputmode="numeric" pattern="[0-9]{2}" maxlength="2" placeholder="18+" required></div></div>
+          <div><label for="profile-dob">Date of birth</label><input id="profile-dob" name="dob" type="date" autocomplete="bday" required><span class="field-hint">You must be 18 or older. Your birth date won’t appear on your profile.</span></div>
+          <div><label for="profile-bio">Your bio</label><textarea id="profile-bio" name="bio" rows="3" minlength="20" maxlength="500" placeholder="A little about who you are and what makes you smile…" required></textarea><span class="field-hint"><span id="bio-count">0</span> / 500 characters (at least 20)</span></div>
+          <fieldset class="field-group"><legend>Gender identity</legend><div class="choice-pills"><label><input type="radio" name="gender" value="Woman" required><span>Woman</span></label><label><input type="radio" name="gender" value="Man"><span>Man</span></label><label><input type="radio" name="gender" value="Non-binary"><span>Non-binary</span></label></div></fieldset>
+          <div><label for="looking-for">I’m looking for</label><select id="looking-for" required><option value="" disabled selected>Choose your preference</option><option>Women</option><option>Men</option><option>Non-binary people</option><option>Women and men</option><option>Everyone</option></select></div>
+          <div><label for="dating-intent">What are you looking for?</label><select id="dating-intent" required><option value="" disabled selected>Choose your intention</option><option>A long-term relationship</option><option>A life partner</option><option>Something casual</option><option>New friends first</option><option>Still figuring it out</option></select></div>
+          <div class="field-pair"><div><label for="drinking">Drinking</label><select id="drinking" required><option value="" disabled selected>Select one</option><option>No</option><option>Sometimes</option><option>Often</option><option>Prefer not to say</option></select></div><div><label for="smoking">Smoking</label><select id="smoking" required><option value="" disabled selected>Select one</option><option>No</option><option>Sometimes</option><option>Often</option><option>Prefer not to say</option></select></div></div>
+          <div class="location-field"><div class="manual-location"><label for="location-search">Your city or nearby area <span class="required-label">Required</span></label><input id="location-search" type="search" autocomplete="off" placeholder="Start typing a city or neighborhood…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="location-suggestions"><span class="location-hint">Type at least 3 characters. Search text is sent to MapTiler / OpenStreetMap for place suggestions.</span><div id="location-suggestions" class="location-suggestions" role="listbox" aria-label="Nearby areas" hidden></div><button id="manual-location-use" class="manual-location-use" type="button" hidden>Use this area</button></div>
+            <span id="location-status" class="location-status" aria-live="polite">Location not added yet.</span><span class="location-attribution">Place results by <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noreferrer">MapTiler</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a></span></div>
+          <label class="consent-check"><input type="checkbox" id="adult-confirm" required><span>I confirm I’m 18 or older and agree to the Community Guidelines.</span></label>
+        </div>
+        <div class="step-actions"><button class="text-button back-to-profile" type="button">← Back</button><button class="button button-dark auth-submit" type="submit">Continue <span>→</span></button></div><div class="auth-error" aria-live="polite"></div>
+      </form>
+      <form id="details-form" class="auth-panel hidden">
+        <div class="section-kicker">A FEW THINGS THAT MAKE YOU, YOU</div><h2>Let’s get to<br><em>know you.</em></h2><p class="auth-description">These details help people find common ground. Choose “Prefer not to say” if you’d rather keep something private.</p>
+        <div class="profile-fields">
+          <fieldset class="field-group"><legend>What are you into? <span class="required-label">Choose 1–5</span></legend><div class="choice-pills interest-pills" id="interest-options"><label><input type="checkbox" name="interest" value="Art"><span>Art</span></label><label><input type="checkbox" name="interest" value="Books"><span>Books</span></label><label><input type="checkbox" name="interest" value="Cooking"><span>Cooking</span></label><label><input type="checkbox" name="interest" value="Fitness"><span>Fitness</span></label><label><input type="checkbox" name="interest" value="Music"><span>Music</span></label><label><input type="checkbox" name="interest" value="Outdoors"><span>Outdoors</span></label><label><input type="checkbox" name="interest" value="Travel"><span>Travel</span></label><label><input type="checkbox" name="interest" value="Movies"><span>Movies</span></label><label><input type="checkbox" name="interest" value="Gaming"><span>Gaming</span></label><label><input type="checkbox" name="interest" value="Dancing"><span>Dancing</span></label><label><input type="checkbox" name="interest" value="Photography"><span>Photography</span></label><label><input type="checkbox" name="interest" value="Food"><span>Food</span></label><label><input type="checkbox" name="interest" value="Coffee"><span>Coffee</span></label><label><input type="checkbox" name="interest" value="Nature"><span>Nature</span></label><label><input type="checkbox" name="interest" value="Yoga"><span>Yoga</span></label><label><input type="checkbox" name="interest" value="Tech"><span>Tech</span></label><label><input type="checkbox" name="interest" value="Fashion"><span>Fashion</span></label><label><input type="checkbox" name="interest" value="Theatre"><span>Theatre</span></label><label><input type="checkbox" name="interest" value="Sports"><span>Sports</span></label><label><input type="checkbox" name="interest" value="Wellness"><span>Wellness</span></label><label><input type="checkbox" name="interest" value="Volunteering"><span>Volunteering</span></label><label><input type="checkbox" name="interest" value="History"><span>History</span></label><label><input type="checkbox" name="interest" value="Podcasts"><span>Podcasts</span></label><label><input type="checkbox" name="interest" value="Comedy"><span>Comedy</span></label><label><input type="checkbox" name="interest" value="Cars"><span>Cars</span></label><label><input type="checkbox" name="interest" value="Pets"><span>Pets</span></label><label><input type="checkbox" name="interest" value="Gardening"><span>Gardening</span></label><label><input type="checkbox" name="interest" value="Design"><span>Design</span></label><label><input type="checkbox" name="interest" value="Writing"><span>Writing</span></label></div><span id="interest-count" class="field-hint">0 of 5 selected</span></fieldset>
+          <fieldset class="field-group"><legend>Languages you know <span class="required-label">Choose at least one</span></legend><div class="choice-pills interest-pills" id="language-options"><label><input type="checkbox" name="language" value="Assamese"><span>Assamese</span></label><label><input type="checkbox" name="language" value="Bengali"><span>Bengali</span></label><label><input type="checkbox" name="language" value="Bodo"><span>Bodo</span></label><label><input type="checkbox" name="language" value="Dogri"><span>Dogri</span></label><label><input type="checkbox" name="language" value="English"><span>English</span></label><label><input type="checkbox" name="language" value="Gujarati"><span>Gujarati</span></label><label><input type="checkbox" name="language" value="Hindi"><span>Hindi</span></label><label><input type="checkbox" name="language" value="Kannada"><span>Kannada</span></label><label><input type="checkbox" name="language" value="Kashmiri"><span>Kashmiri</span></label><label><input type="checkbox" name="language" value="Konkani"><span>Konkani</span></label><label><input type="checkbox" name="language" value="Maithili"><span>Maithili</span></label><label><input type="checkbox" name="language" value="Malayalam"><span>Malayalam</span></label><label><input type="checkbox" name="language" value="Manipuri (Meitei)"><span>Manipuri (Meitei)</span></label><label><input type="checkbox" name="language" value="Marathi"><span>Marathi</span></label><label><input type="checkbox" name="language" value="Nepali"><span>Nepali</span></label><label><input type="checkbox" name="language" value="Odia"><span>Odia</span></label><label><input type="checkbox" name="language" value="Punjabi"><span>Punjabi</span></label><label><input type="checkbox" name="language" value="Sanskrit"><span>Sanskrit</span></label><label><input type="checkbox" name="language" value="Santali"><span>Santali</span></label><label><input type="checkbox" name="language" value="Sindhi"><span>Sindhi</span></label><label><input type="checkbox" name="language" value="Tamil"><span>Tamil</span></label><label><input type="checkbox" name="language" value="Telugu"><span>Telugu</span></label><label><input type="checkbox" name="language" value="Urdu"><span>Urdu</span></label><label><input type="checkbox" id="other-language-toggle" value="Other"><span>Other</span></label><span id="custom-language-options" class="custom-language-options"></span></div><div id="other-language-entry" class="other-language-entry" hidden><label for="other-language-input">Add another language</label><div class="other-language-controls"><input id="other-language-input" type="text" maxlength="40" placeholder="Enter language name"><button id="add-language-button" type="button" class="text-button">Add language</button></div></div></fieldset>
+          <div class="field-pair"><div><label for="mother-tongue">Mother tongue</label><select id="mother-tongue" required><option value="" disabled selected>Select your mother tongue</option><option>Assamese</option><option>Bengali</option><option>Bodo</option><option>Dogri</option><option>English</option><option>Gujarati</option><option>Hindi</option><option>Kannada</option><option>Kashmiri</option><option>Konkani</option><option>Maithili</option><option>Malayalam</option><option>Manipuri (Meitei)</option><option>Marathi</option><option>Nepali</option><option>Odia</option><option>Punjabi</option><option>Sanskrit</option><option>Santali</option><option>Sindhi</option><option>Tamil</option><option>Telugu</option><option>Urdu</option><option>Other</option></select></div><div><label for="family-plan">Family plans</label><select id="family-plan" required><option value="" disabled selected>Choose one</option><option>Want children</option><option>Don’t want children</option><option>Open to children</option><option>Already have children</option><option>Prefer not to say</option></select></div></div>
+          <div class="field-pair"><div><label for="religion">Religion</label><select id="religion" required><option value="" disabled selected>Choose one</option><option>Hindu</option><option>Muslim</option><option>Christian</option><option>Sikh</option><option>Buddhist</option><option>Jewish</option><option>Other</option><option>Atheist</option><option>Agnostic</option><option>Prefer not to say</option></select></div><div><label for="education">Education level</label><select id="education" required><option value="" disabled selected>Choose one</option><option>High school</option><option>Trade school</option><option>Undergraduate degree</option><option>Graduate degree</option><option>Postgraduate degree</option><option>Prefer not to say</option></select></div></div>
+          <div class="field-pair"><div><label for="exercise">Exercise</label><select id="exercise" required><option value="" disabled selected>Choose one</option><option>Every day</option><option>Often</option><option>Sometimes</option><option>Rarely</option><option>Never</option><option>Prefer not to say</option></select></div><div><label for="job-title">Job / profession</label><input id="job-title" placeholder="e.g. Product designer" required maxlength="80"></div></div>
+          <div class="field-pair"><div><label for="company-name">Company name</label><input id="company-name" placeholder="Company or organization" required maxlength="100"></div><div><label for="workplace">Workplace <span class="optional-label">Optional</span></label><input id="workplace" placeholder="City or remote" maxlength="100"></div></div>
+        </div>
+        <div class="step-actions"><button class="text-button back-to-profile" type="button">← Back</button><button class="button button-dark auth-submit" type="submit">Continue <span>→</span></button></div><div class="auth-error" aria-live="polite"></div>
+      </form>
+      <form id="photos-form" class="auth-panel hidden">
+        <div class="section-kicker">A PICTURE OF YOUR WORLD</div><h2>Show us<br><em>yourself.</em></h2><p class="auth-description">Add up to six photos. Your first two are required so people can get a sense of you.</p>
+        <div class="photo-upload-grid">
+          <label class="photo-slot required-photo" for="photo-1"><input id="photo-1" type="file" accept="image/*"><span class="photo-preview"></span><span class="photo-slot-add">＋</span><span class="photo-slot-label">Photo 1 <b>Required</b></span></label>
+          <label class="photo-slot required-photo" for="photo-2"><input id="photo-2" type="file" accept="image/*"><span class="photo-preview"></span><span class="photo-slot-add">＋</span><span class="photo-slot-label">Photo 2 <b>Required</b></span></label>
+          <label class="photo-slot" for="photo-3"><input id="photo-3" type="file" accept="image/*"><span class="photo-preview"></span><span class="photo-slot-add">＋</span><span class="photo-slot-label">Photo 3</span></label>
+          <label class="photo-slot" for="photo-4"><input id="photo-4" type="file" accept="image/*"><span class="photo-preview"></span><span class="photo-slot-add">＋</span><span class="photo-slot-label">Photo 4</span></label>
+          <label class="photo-slot" for="photo-5"><input id="photo-5" type="file" accept="image/*"><span class="photo-preview"></span><span class="photo-slot-add">＋</span><span class="photo-slot-label">Photo 5</span></label>
+          <label class="photo-slot" for="photo-6"><input id="photo-6" type="file" accept="image/*"><span class="photo-preview"></span><span class="photo-slot-add">＋</span><span class="photo-slot-label">Photo 6</span></label>
+        </div>
+        <div class="step-actions"><button class="text-button back-to-details" type="button">← Back</button><button class="button button-dark auth-submit" type="submit">Finish profile <span>→</span></button></div><div class="auth-error" aria-live="polite"></div>
+      </form>
+      <p class="prototype-note">Demo only: no SMS is sent; any 6-digit code advances. Registered phone numbers are stored in this browser for the login demo. Profile details and photo previews are not saved. Live accounts, matching, and uploads need a secure backend.</p>
+    </section>
+  </div>
+  <section id="matches-page" class="matches-page" hidden>
+    <div class="matches-page-wrap section-wrap">
+      <div class="section-kicker">YOUR NEXT GOOD THING</div><h1>Find your best<br><em>match.</em></h1>
+      <p class="matches-intro">Your story, your standards, your pace. Start with the people and details that feel right to you.</p>
+      <button id="filter-toggle" class="filter-toggle" type="button" aria-expanded="false" aria-controls="match-filter-panel"><span>Filter your matches</span><span id="filter-toggle-icon" aria-hidden="true">＋</span></button>
+      <div id="match-filter-panel" class="match-filter-panel" hidden>
+      <form id="match-filter-form" class="match-filters">
+        <div class="filters-title"><div><span class="section-kicker">YOUR PREFERENCES</span><span class="filter-count-label" id="match-count">0 profiles</span></div><button class="filter-clear" id="clear-match-filters" type="button">Clear filters</button></div>
+        <div class="filters-grid">
+          <div><label for="filter-gender">Looking for (gender)</label><select id="filter-gender"><option>Everyone</option><option>Women</option><option>Men</option><option>Non-binary people</option><option>Women and men</option></select></div>
+          <div><label for="filter-relation">Relationship type</label><select id="filter-relation"><option value="">Any relationship type</option><option>A long-term relationship</option><option>A life partner</option><option>Something casual</option><option>New friends first</option><option>Still figuring it out</option></select></div>
+          <div class="filter-age"><label>Age range</label><div><input id="filter-age-min" type="number" min="18" max="99" value="18" aria-label="Minimum age"><span>to</span><input id="filter-age-max" type="number" min="18" max="99" value="99" aria-label="Maximum age"></div></div>
+          <div class="filter-distance"><label for="filter-distance">Maximum distance <output id="distance-output" for="filter-distance">50 km</output></label><input id="filter-distance" type="range" min="5" max="300" step="5" value="50"></div>
+          <div><label for="filter-family">Family plan</label><select id="filter-family"><option value="">Any</option><option>Want children</option><option>Don’t want children</option><option>Open to children</option><option>Already have children</option><option>Prefer not to say</option></select></div>
+          <div><label for="filter-religion">Religion</label><select id="filter-religion"><option value="">Any</option><option>Hindu</option><option>Muslim</option><option>Christian</option><option>Sikh</option><option>Buddhist</option><option>Jewish</option><option>Other</option><option>Atheist</option><option>Agnostic</option><option>Prefer not to say</option></select></div>
+          <div><label for="filter-education">Education</label><select id="filter-education"><option value="">Any</option><option>High school</option><option>Trade school</option><option>Undergraduate degree</option><option>Graduate degree</option><option>Postgraduate degree</option><option>Prefer not to say</option></select></div>
+          <div><label for="filter-drinks">Drinks</label><select id="filter-drinks"><option value="">Any</option><option>No</option><option>Sometimes</option><option>Often</option><option>Prefer not to say</option></select></div>
+          <div><label for="filter-smokes">Smokes</label><select id="filter-smokes"><option value="">Any</option><option>No</option><option>Sometimes</option><option>Often</option><option>Prefer not to say</option></select></div>
+        </div>
+        <div class="filter-actions"><span>Adjust these any time to find your kind of connection.</span><button class="button button-dark" type="submit">Show matches <span>→</span></button></div>
+      </form>
+      </div>
+      <div class="results-heading"><h2>People to meet</h2><span id="results-count"></span></div>
+      <div id="match-action-feedback" class="match-action-feedback" role="status" aria-live="polite"></div>
+      <div id="match-results" class="match-results" aria-live="polite"></div>
+      <p class="match-demo-note">These are sample profiles for the site preview. Real distance-based profiles, likes, and account data require a connected backend.</p>
+    </div>
+  </section>
+  <section id="likes-page" class="likes-page" hidden>
+    <div class="likes-page-wrap section-wrap">
+      <div class="section-kicker">A LITTLE INTEREST COMING YOUR WAY</div><h1>People who<br><em>like you.</em></h1>
+      <p class="likes-intro">See who’s interested, take a closer look, and say hello if you’d like.</p>
+      <div class="likes-summary"><span id="likes-page-count">3 people like you</span><span>Demo likes · live likes need a connected backend</span></div>
+      <div id="likes-feedback" class="match-action-feedback" role="status" aria-live="polite"></div>
+      <div id="likes-results" class="likes-results"></div>
+    </div>
+  </section>
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+
+
+
