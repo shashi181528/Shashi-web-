@@ -7,8 +7,8 @@ The website is currently a static GitHub Pages app. It stores demo profiles, ses
 1. Create a Supabase project at [supabase.com](https://supabase.com/).
 2. Open the project's **SQL Editor**, create a query, paste in `schema.sql`, and run it.
 3. In **Authentication → Providers**, enable Phone and configure an SMS provider. The current site's OTP is a demo flow, so database login will not be real phone verification until the app is connected to Supabase Auth.
-4. In **Project Settings → API**, copy the project URL and the public `anon` key. Never put a `service_role` key in browser code or commit it to this repository.
-5. Connect the website's auth and data operations to Supabase using those public values. Only after that connection is made will form submissions be stored in the hosted database.
+4. In **Project Settings → API Keys**, copy the Project URL and the public publishable key (or the legacy `anon` key). The configured public values are stored in `supabase-config.js`; never put a secret or `service_role` key in browser code.
+5. The site sends phone OTP through Supabase Auth, stores profile details in `profiles`/`private_profiles`, and uploads profile photos to the private Storage bucket. This requires the schema to be applied and Phone Auth plus an SMS provider to be enabled.
 
 ## Tables
 

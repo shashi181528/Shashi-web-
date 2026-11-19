@@ -8,6 +8,7 @@ on:
       - 'index.html'
       - 'script.js'
       - 'styles.css'
+      - 'supabase-config.js'
       - 'capacitor.config.json'
       - 'package.json'
       - 'package-lock.json'

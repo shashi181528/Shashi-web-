@@ -1,3 +1,66 @@
+const goodkindSupabaseConfig = window.GOODKIND_SUPABASE_CONFIG || {};
+const supabaseDatabaseEnabled = Boolean(goodkindSupabaseConfig.url && goodkindSupabaseConfig.publishableKey);
+const supabaseSessionStorageKey = 'goodkind-supabase-auth-session';
+function readSupabaseSession() {
+  try { return JSON.parse(localStorage.getItem(supabaseSessionStorageKey) || 'null'); }
+  catch { return null; }
+}
+function writeSupabaseSession(session) {
+  try { localStorage.setItem(supabaseSessionStorageKey, JSON.stringify(session)); }
+  catch { throw new Error('This browser could not save your secure sign-in session.'); }
+}
+function clearSupabaseSession() {
+  try { localStorage.removeItem(supabaseSessionStorageKey); } catch { /* Clear in-memory auth either way. */ }
+}
+function supabaseMessage(payload, status) {
+  const detail = payload?.msg || payload?.message || payload?.error_description || payload?.error;
+  if (status === 404 && String(detail || '').toLowerCase().includes('schema cache')) {
+    return 'The Goodkind database tables are not installed yet. Run supabase/schema.sql in your Supabase SQL Editor.';
+  }
+  return detail || `Supabase request failed (${status}).`;
+}
+async function refreshSupabaseSession() {
+  const current = readSupabaseSession();
+  if (!current?.refresh_token) throw new Error('Your sign-in expired. Please log in again.');
+  const response = await fetch(`${goodkindSupabaseConfig.url.replace(/\/$/, '')}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: { apikey: goodkindSupabaseConfig.publishableKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: current.refresh_token })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    clearSupabaseSession();
+    throw new Error(supabaseMessage(payload, response.status));
+  }
+  const session = { ...payload, expires_at: Date.now() + Number(payload.expires_in || 3600) * 1000 };
+  writeSupabaseSession(session);
+  return session;
+}
+async function supabaseRequest(path, options = {}) {
+  if (!supabaseDatabaseEnabled) throw new Error('Supabase is not configured.');
+  const { method = 'GET', body, auth = true, headers = {}, retryAuth = true } = options;
+  let session = auth ? readSupabaseSession() : null;
+  if (auth && session?.refresh_token && Number(session.expires_at || 0) < Date.now() + 60000) {
+    session = await refreshSupabaseSession();
+  }
+  const requestHeaders = { apikey: goodkindSupabaseConfig.publishableKey, ...headers };
+  if (auth && session?.access_token) requestHeaders.Authorization = `Bearer ${session.access_token}`;
+  let requestBody = body;
+  if (body !== undefined && !(body instanceof Blob) && typeof body !== 'string') {
+    requestHeaders['Content-Type'] = requestHeaders['Content-Type'] || 'application/json';
+    requestBody = JSON.stringify(body);
+  }
+  const response = await fetch(`${goodkindSupabaseConfig.url.replace(/\/$/, '')}/${path.replace(/^\//, '')}`, {
+    method, headers: requestHeaders, ...(requestBody === undefined ? {} : { body: requestBody })
+  });
+  const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
+  if (response.status === 401 && auth && retryAuth && session?.refresh_token) {
+    await refreshSupabaseSession();
+    return supabaseRequest(path, { ...options, retryAuth: false });
+  }
+  if (!response.ok) throw new Error(supabaseMessage(payload, response.status));
+  return payload;
+}
 const genderCopy = {
   Woman: 'Woman. Your way. No footnotes needed.',
   Man: 'Man. Your way. No footnotes needed.',
@@ -64,7 +127,7 @@ const registeredPhones = new Set(readRegisteredPhones());
 let authMode = 'register';
 let editProfileMode = false;
 let verifiedPhone = '';
-let currentPhoneKey = readActivePhone();
+let currentPhoneKey = supabaseDatabaseEnabled ? '' : readActivePhone();
 let currentMatchIndex = 0;
 let visibleMatches = [];
 const logoutButton = document.getElementById('logout-button');
@@ -80,6 +143,110 @@ function readSavedProfiles() {
     return {};
   }
 }
+function cacheProfileForPhone(phone, savedProfile) {
+  const profiles = readSavedProfiles();
+  profiles[phone] = savedProfile;
+  try { localStorage.setItem(profileStorageKey, JSON.stringify(profiles)); }
+  catch { /* Supabase remains the durable copy if local cache storage is unavailable. */ }
+}
+function mapProfileToSupabaseRow(userId, source) {
+  return {
+    user_id: userId,
+    display_name: source.name,
+    age: source.age,
+    gender: source.gender,
+    bio: source.bio || '',
+    city: source.locationLabel || '',
+    looking_for: source.lookingFor || '',
+    relationship_type: source.datingIntent || '',
+    interests: source.interests || [],
+    languages: source.languages || [],
+    mother_tongue: source.motherTongue || '',
+    family_plan: source.familyPlan || '',
+    religion: source.religion || '',
+    education: source.education || '',
+    exercise: source.exercise || '',
+    job_title: source.jobTitle || '',
+    company_name: source.company || '',
+    workplace: source.workplace || '',
+    drinking: source.drinking || '',
+    smoking: source.smoking || ''
+  };
+}
+async function signProfilePhotoUrl(objectPath) {
+  const result = await supabaseRequest(`storage/v1/object/sign/profile-photos/${objectPath.split('/').map(encodeURIComponent).join('/')}`, {
+    method: 'POST', body: { expiresIn: 3600 }
+  });
+  if (!result?.signedURL) return '';
+  return /^https?:\/\//i.test(result.signedURL)
+    ? result.signedURL
+    : `${goodkindSupabaseConfig.url.replace(/\/$/, '')}/storage/v1${result.signedURL.startsWith('/') ? '' : '/'}${result.signedURL}`;
+}
+async function persistSupabaseProfile(userId, source, files = []) {
+  await supabaseRequest('rest/v1/profiles?on_conflict=user_id', {
+    method: 'POST', body: [mapProfileToSupabaseRow(userId, source)],
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }
+  });
+  await supabaseRequest('rest/v1/private_profiles?on_conflict=user_id', {
+    method: 'POST', body: [{ user_id: userId, birth_date: source.dob || null }],
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }
+  });
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+    if (!file) continue;
+    const position = index + 1;
+    const objectPath = `${userId}/${position}`;
+    await supabaseRequest(`storage/v1/object/profile-photos/${objectPath}`, {
+      method: 'POST', body: file,
+      headers: { 'Content-Type': file.type, 'x-upsert': 'true' }
+    });
+    await supabaseRequest('rest/v1/profile_photos?on_conflict=user_id,position', {
+      method: 'POST', body: [{ user_id: userId, object_path: objectPath, position, is_primary: position === 1 }],
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' }
+    });
+    profile.photoUrls[position - 1] = await signProfilePhotoUrl(objectPath);
+  }
+}
+async function readSupabaseProfile(userId) {
+  const query = encodeURIComponent(userId);
+  const rows = await supabaseRequest(`rest/v1/profiles?select=*&user_id=eq.${query}`);
+  if (!rows?.length) return null;
+  const row = rows[0];
+  const privateRows = await supabaseRequest(`rest/v1/private_profiles?select=birth_date&user_id=eq.${query}`);
+  const photoRows = await supabaseRequest(`rest/v1/profile_photos?select=object_path,position&user_id=eq.${query}&order=position.asc`);
+  const photoUrls = await Promise.all((photoRows || []).map((photo) => signProfilePhotoUrl(photo.object_path).catch(() => '')));
+  const loaded = {
+    name: row.display_name,
+    age: row.age,
+    dob: privateRows?.[0]?.birth_date || '',
+    gender: row.gender,
+    bio: row.bio || '',
+    locationLabel: row.city || '',
+    lookingFor: row.looking_for || '',
+    datingIntent: row.relationship_type || '',
+    interests: row.interests || [],
+    languages: row.languages || [],
+    motherTongue: row.mother_tongue || '',
+    familyPlan: row.family_plan || '',
+    religion: row.religion || '',
+    education: row.education || '',
+    exercise: row.exercise || '',
+    jobTitle: row.job_title || '',
+    company: row.company_name || '',
+    workplace: row.workplace || '',
+    drinking: row.drinking || '',
+    smoking: row.smoking || '',
+    photoUrls: []
+  };
+  (photoRows || []).forEach((photo, index) => { loaded.photoUrls[Number(photo.position) - 1] = photoUrls[index]; });
+  return loaded;
+}
+function applyLoadedProfile(loaded) {
+  Object.keys(profile).forEach((key) => { if (key !== 'photoUrls') delete profile[key]; });
+  Object.assign(profile, loaded);
+  profile.photoUrls = loaded.photoUrls || [];
+  profile.location = loaded.locationLabel ? { label: loaded.locationLabel, latitude: null, longitude: null, source: 'saved-profile' } : null;
+}
 function loadProfileForPhone(phone) {
   profile.photoUrls.forEach((url) => URL.revokeObjectURL(url));
   profile.photoUrls = [];
@@ -91,7 +258,7 @@ function loadProfileForPhone(phone) {
   profile.photoUrls = [];
   profile.location = saved.locationLabel ? { label: saved.locationLabel, latitude: null, longitude: null, source: 'saved-profile' } : null;
 }
-function saveCurrentProfile() {
+async function saveCurrentProfile() {
   if (!currentPhoneKey) return;
   profile.name = document.getElementById('profile-name').value.trim();
   profile.age = Number(document.getElementById('profile-age').value);
@@ -116,12 +283,12 @@ function saveCurrentProfile() {
   const savedProfile = { ...profile };
   delete savedProfile.location;
   delete savedProfile.photoUrls;
-  const allProfiles = readSavedProfiles();
-  allProfiles[currentPhoneKey] = savedProfile;
-  try {
-    localStorage.setItem(profileStorageKey, JSON.stringify(allProfiles));
-  } catch {
-    // Keep the current profile available in memory if browser storage is full or unavailable.
+  cacheProfileForPhone(currentPhoneKey, savedProfile);
+  if (supabaseDatabaseEnabled) {
+    const session = readSupabaseSession();
+    if (!session?.user?.id) throw new Error('Your verified Supabase session is missing. Please log in again.');
+    const files = typeof photoInputs !== 'undefined' ? photoInputs.map((input) => input.files?.[0] || null) : [];
+    await persistSupabaseProfile(session.user.id, profile, files);
   }
 }
 function syncRegistrationCallToAction() {
@@ -164,6 +331,7 @@ function readActivePhone() {
 }
 function setActiveSession(phone) {
   currentPhoneKey = phone;
+  registeredPhones.add(phone);
   try {
     localStorage.setItem(sessionStorageKey, phone);
   } catch {
@@ -379,7 +547,16 @@ viewedNav.addEventListener('click', () => {
 });
 plansNav.addEventListener('click', () => { setMobileMenu(false); openSubscriptionsPage(); });
 document.getElementById('hero-plans-trigger').addEventListener('click', openSubscriptionsPage);
-logoutButton.addEventListener('click', () => {
+async function signOutSupabaseSession() {
+  const session = readSupabaseSession();
+  if (session?.access_token) {
+    try { await supabaseRequest('auth/v1/logout', { method: 'POST' }); } catch { /* The local session is still cleared below. */ }
+  }
+  clearSupabaseSession();
+  try { localStorage.removeItem(sessionStorageKey); } catch { /* Clear in-memory state either way. */ }
+}
+logoutButton.addEventListener('click', async () => {
+  if (supabaseDatabaseEnabled) await signOutSupabaseSession();
   try {
     localStorage.removeItem(sessionStorageKey);
   } catch {
@@ -412,10 +589,12 @@ const phoneNumberInput = document.getElementById('phone-number');
 phoneNumberInput.addEventListener('input', () => {
   phoneNumberInput.value = phoneNumberInput.value.replace(/\D/g, '').slice(0, 10);
 });
-document.getElementById('phone-form').addEventListener('submit', (event) => {
+document.getElementById('phone-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
+  const submitButton = form.querySelector('button[type="submit"]');
+  const formError = form.querySelector('.auth-error');
   const callingCode = document.getElementById('country-code').value;
   const enteredNumber = document.getElementById('phone-number').value.trim();
   currentPhoneKey = normalizePhone(callingCode, enteredNumber);
@@ -423,6 +602,22 @@ document.getElementById('phone-form').addEventListener('submit', (event) => {
   const alertBox = document.getElementById('auth-alert');
   const alertMessage = document.getElementById('auth-alert-message');
   const alertAction = document.getElementById('auth-alert-action');
+  if (supabaseDatabaseEnabled) {
+    submitButton.disabled = true;
+    formError.textContent = '';
+    try {
+      await supabaseRequest('auth/v1/otp', {
+        method: 'POST', auth: false,
+        body: { phone: currentPhoneKey, create_user: true }
+      });
+      alertBox.hidden = true;
+      document.getElementById('phone-display').textContent = verifiedPhone;
+      showPanel('otp-form', 1);
+    } catch (error) {
+      formError.textContent = error.message || 'Could not send a verification code. Check the Supabase Phone Auth and SMS settings.';
+    } finally { submitButton.disabled = false; }
+    return;
+  }
   if (authMode === 'login' && !registeredPhones.has(currentPhoneKey)) {
     alertMessage.textContent = 'This number is not registered yet. Create an account first, then come back to log in.';
     alertAction.textContent = 'Register for an account';
@@ -441,13 +636,78 @@ document.getElementById('phone-form').addEventListener('submit', (event) => {
   document.getElementById('phone-display').textContent = verifiedPhone;
   showPanel('otp-form', 1);
 });
-document.getElementById('otp-form').addEventListener('submit', (event) => {
+document.getElementById('otp-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
+  const submitButton = form.querySelector('button[type="submit"]');
   const code = document.getElementById('otp-code').value.trim();
   if (!/^\d{6}$/.test(code)) {
     form.querySelector('.auth-error').textContent = 'Enter the 6-digit code to continue.';
+    return;
+  }
+  if (supabaseDatabaseEnabled) {
+    const formError = form.querySelector('.auth-error');
+    submitButton.disabled = true;
+    formError.textContent = '';
+    try {
+      const authResult = await supabaseRequest('auth/v1/verify', {
+        method: 'POST', auth: false,
+        body: { phone: currentPhoneKey, token: code, type: 'sms' }
+      });
+      const session = { ...authResult, expires_at: Date.now() + Number(authResult.expires_in || 3600) * 1000 };
+      writeSupabaseSession(session);
+      const remoteProfile = await readSupabaseProfile(session.user.id);
+      const localProfile = readSavedProfiles()[currentPhoneKey];
+
+      if (authMode === 'register' && remoteProfile) {
+        await signOutSupabaseSession();
+        const alertBox = document.getElementById('auth-alert');
+        document.getElementById('auth-alert-message').textContent = 'This number already has a Goodkind account. Log in with this number instead.';
+        const alertAction = document.getElementById('auth-alert-action');
+        alertAction.textContent = 'Go to log in';
+        alertAction.onclick = () => openAuth('login');
+        alertBox.hidden = false;
+        showPanel('phone-form', 0);
+        return;
+      }
+
+      if (authMode === 'login') {
+        if (!remoteProfile && !localProfile) {
+          await signOutSupabaseSession();
+          const alertBox = document.getElementById('auth-alert');
+          document.getElementById('auth-alert-message').textContent = 'This number is not registered yet. Create an account first, then come back to log in.';
+          const alertAction = document.getElementById('auth-alert-action');
+          alertAction.textContent = 'Register for an account';
+          alertAction.onclick = () => openAuth('register');
+          alertBox.hidden = false;
+          showPanel('phone-form', 0);
+          return;
+        }
+        if (remoteProfile) applyLoadedProfile(remoteProfile);
+        else {
+          applyLoadedProfile(localProfile);
+          await persistSupabaseProfile(session.user.id, localProfile);
+          cacheProfileForPhone(currentPhoneKey, localProfile);
+        }
+        saveRegisteredPhone(currentPhoneKey);
+        setActiveSession(currentPhoneKey);
+        showMatches();
+      } else if (remoteProfile) {
+        await signOutSupabaseSession();
+        formError.textContent = 'This phone number already has an account. Choose Log in to continue.';
+      } else if (localProfile) {
+        applyLoadedProfile(localProfile);
+        await persistSupabaseProfile(session.user.id, localProfile);
+        saveRegisteredPhone(currentPhoneKey);
+        setActiveSession(currentPhoneKey);
+        showMatches();
+      } else {
+        showPanel('profile-form', 2);
+      }
+    } catch (error) {
+      formError.textContent = error.message || 'Could not verify your number or load your profile. Please try again.';
+    } finally { submitButton.disabled = false; }
     return;
   }
   if (authMode === 'login') {
@@ -862,14 +1122,14 @@ photoInputs.forEach((input, index) => {
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       input.value = '';
-      document.querySelector('#photos-form .auth-error').textContent = 'Please choose an image file.';
+      document.querySelector('#photos-form .auth-error').textContent = 'Choose a JPG, PNG, or WebP image.';
       return;
     }
-    if (file.size > 12 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       input.value = '';
-      document.querySelector('#photos-form .auth-error').textContent = 'Each photo must be smaller than 12 MB.';
+      document.querySelector('#photos-form .auth-error').textContent = 'Each photo must be 10 MB or smaller.';
       return;
     }
     if (profile.photoUrls[index]) URL.revokeObjectURL(profile.photoUrls[index]);
@@ -881,7 +1141,7 @@ photoInputs.forEach((input, index) => {
     document.querySelector('#photos-form .auth-error').textContent = '';
   });
 });
-document.getElementById('photos-form').addEventListener('submit', (event) => {
+document.getElementById('photos-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const chosen = photoInputs.filter((input) => input.files?.length).length;
   if (!editProfileMode && chosen < 2) {
@@ -889,7 +1149,19 @@ document.getElementById('photos-form').addEventListener('submit', (event) => {
     return;
   }
   profile.company = document.getElementById('company-name').value.trim();
-  saveCurrentProfile();
+  const submitButton = document.getElementById('photos-submit-button');
+  const formError = document.querySelector('#photos-form .auth-error');
+  submitButton.disabled = true;
+  formError.textContent = supabaseDatabaseEnabled ? 'Saving your profile securely…' : '';
+  try {
+    await saveCurrentProfile();
+  } catch (error) {
+    formError.textContent = error.message || 'Your profile could not be saved. Please try again.';
+    submitButton.disabled = false;
+    return;
+  }
+  submitButton.disabled = false;
+  formError.textContent = '';
   if (editProfileMode) {
     editProfileMode = false;
     document.getElementById('photos-submit-button').innerHTML = 'Finish profile <span>→</span>';
@@ -1565,4 +1837,55 @@ function renderProfilePage() {
 
 initializePlanOffers();
 syncSubscriptionAccess();
-if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) openMatchesPage();
+async function restoreSupabaseAccount() {
+  const savedSession = readSupabaseSession();
+  if (!savedSession?.access_token) return;
+  try {
+    const user = await supabaseRequest('auth/v1/user');
+    if (!user?.id || !user.phone) throw new Error('Your Supabase account is missing its verified phone number. Please log in again.');
+    currentPhoneKey = user.phone;
+    const remoteProfile = await readSupabaseProfile(user.id);
+    if (remoteProfile) {
+      applyLoadedProfile(remoteProfile);
+      const cached = { ...remoteProfile };
+      delete cached.photoUrls;
+      delete cached.location;
+      cacheProfileForPhone(currentPhoneKey, cached);
+      saveRegisteredPhone(currentPhoneKey);
+      setActiveSession(currentPhoneKey);
+      openMatchesPage();
+      return;
+    }
+    const localProfile = readSavedProfiles()[currentPhoneKey];
+    if (localProfile) {
+      applyLoadedProfile(localProfile);
+      await persistSupabaseProfile(user.id, localProfile);
+      saveRegisteredPhone(currentPhoneKey);
+      setActiveSession(currentPhoneKey);
+      openMatchesPage();
+      return;
+    }
+    authMode = 'register';
+    openAuth('register');
+    showPanel('profile-form', 2);
+  } catch (error) {
+    const phone = savedSession.user?.phone || currentPhoneKey;
+    const localProfile = phone ? readSavedProfiles()[phone] : null;
+    if (localProfile) {
+      currentPhoneKey = phone;
+      applyLoadedProfile(localProfile);
+      saveRegisteredPhone(phone);
+      setActiveSession(phone);
+      openMatchesPage();
+      console.warn('Supabase profile sync is unavailable; showing the saved browser copy.', error);
+      return;
+    }
+    openAuth('login');
+    document.querySelector('#phone-form .auth-error').textContent = error.message || 'Could not load your account from Supabase.';
+  }
+}
+if (supabaseDatabaseEnabled) {
+  restoreSupabaseAccount();
+} else if (currentPhoneKey && registeredPhones.has(currentPhoneKey)) {
+  openMatchesPage();
+}
