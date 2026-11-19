@@ -6,9 +6,9 @@ The website is currently a static GitHub Pages app. It stores demo profiles, ses
 
 1. Create a Supabase project at [supabase.com](https://supabase.com/).
 2. Open the project's **SQL Editor**, create a query, paste in `schema.sql`, and run it.
-3. In **Authentication → Providers**, enable Phone and configure an SMS provider. The current site's OTP is a demo flow, so database login will not be real phone verification until the app is connected to Supabase Auth.
+3. In **Authentication → Providers**, enable Phone sign-in. For TextBee OTP delivery, follow [`TEXTBEE_OTP_SETUP.md`](TEXTBEE_OTP_SETUP.md) to deploy and configure the Supabase Send SMS Auth Hook.
 4. In **Project Settings → API Keys**, copy the Project URL and the public publishable key (or the legacy `anon` key). The configured public values are stored in `supabase-config.js`; never put a secret or `service_role` key in browser code.
-5. The site sends phone OTP through Supabase Auth, stores profile details in `profiles`/`private_profiles`, and uploads profile photos to the private Storage bucket. This requires the schema to be applied and Phone Auth plus an SMS provider to be enabled.
+5. The site sends and verifies phone OTP through Supabase Auth, stores profile details in `profiles`/`private_profiles`, and uploads profile photos to the private Storage bucket. Phone Auth and a configured SMS delivery method must be enabled.
 
 ## Tables
 
@@ -31,4 +31,4 @@ values ('AUTH_USER_UUID_HERE', 'admin')
 on conflict (user_id) do update set role = excluded.role;
 ```
 
-The current standalone admin page still uses browser-only demo storage and its client-side demo login. Do not use that page to administer real member data: production plan/subscription actions must be moved behind authenticated server-side functions, and the site frontend must be connected to Supabase Auth and the tables above.
+The standalone admin portal authenticates with Supabase Auth and requires an administrator row in `user_roles`. Its plan and subscription actions use the row-level security policies above.
