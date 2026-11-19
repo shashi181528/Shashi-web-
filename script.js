@@ -576,14 +576,19 @@ locationSearch.addEventListener('input', () => {
     }
   }, 450);
 });
-requestLocationButton.addEventListener('click', () => {
-  if (!navigator.geolocation) {
-    locationStatus.textContent = 'This browser does not support location access. Enter your city or nearby area instead.';
-    return;
+async function readDevicePosition(options) {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    const { Geolocation } = await import('@capacitor/geolocation');
+    return Geolocation.getCurrentPosition(options);
   }
+  if (!navigator.geolocation) throw new Error('This browser does not support location access.');
+  return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options));
+}
+requestLocationButton.addEventListener('click', async () => {
   requestLocationButton.disabled = true;
-  locationStatus.textContent = 'Allow location access in your browser to find nearby areas…';
-  navigator.geolocation.getCurrentPosition(async (position) => {
+  locationStatus.textContent = 'Allow location access to find nearby areas…';
+  try {
+    const position = await readDevicePosition({ enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
     const { latitude, longitude } = position.coords;
     try {
       const label = await reverseGeocode(latitude, longitude);
@@ -595,16 +600,15 @@ requestLocationButton.addEventListener('click', () => {
       hideLocationSuggestions();
     } catch (error) {
       locationStatus.textContent = error.message || 'Could not find your nearby area. Enter it manually.';
-    } finally {
-      requestLocationButton.disabled = false;
     }
-  }, (error) => {
-    requestLocationButton.disabled = false;
-    const message = error.code === 1
+  } catch (error) {
+    const message = error.code === 1 || error.code === 'OS-PLUG-GLOC-0003'
       ? 'Location access was not allowed. You can enter your city or nearby area instead.'
       : 'Could not read your location. Check your browser settings or enter your area manually.';
     locationStatus.textContent = message;
-  }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 });
+  } finally {
+    requestLocationButton.disabled = false;
+  }
 });
 useTypedLocation.addEventListener('click', () => {
   const label = locationSearch.value.trim();

@@ -1,0 +1,9 @@
+{
+  "appId": "com.goodkind.dating",
+  "appName": "Goodkind",
+  "webDir": "www",
+  "backgroundColor": "#f7f4ee",
+  "android": {
+    "allowMixedContent": false
+  }
+}
