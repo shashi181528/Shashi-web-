@@ -287,7 +287,7 @@ async function saveCurrentProfile() {
   if (supabaseDatabaseEnabled) {
     const session = readSupabaseSession();
     if (!session?.user?.id) throw new Error('Your verified Supabase session is missing. Please log in again.');
-    const files = typeof photoInputs !== 'undefined' ? photoInputs.map((input) => input.files?.[0] || null) : [];
+    const files = typeof selectedProfilePhotoFiles !== 'undefined' ? selectedProfilePhotoFiles : [];
     await persistSupabaseProfile(session.user.id, profile, files);
   }
 }
@@ -448,6 +448,7 @@ function openMatchesPage() {
   document.body.classList.add('matches-view');
   if (!matchFiltersInitialized) initializeMatchFilters();
   applyMatchFilters();
+  refreshSharedMembership().then(syncSubscriptionAccess).catch(() => { /* Keep the last saved membership status when offline. */ });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function openLikesPage() {
@@ -514,6 +515,10 @@ function openSubscriptionsPage() {
   subscriptionsPage.hidden = false;
   document.body.classList.add('matches-view');
   renderSubscriptionPage();
+  refreshSharedMembership().then(() => { syncSubscriptionAccess(); renderSubscriptionPage(); }).catch((error) => {
+    subscriptionNotice = `Memberships could not refresh from the server: ${error.message}`;
+    renderSubscriptionPage();
+  });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 document.querySelectorAll('.main-nav a, .site-footer a, .site-header .brand').forEach((link) => link.addEventListener('click', () => {
@@ -663,7 +668,7 @@ document.getElementById('otp-form').addEventListener('submit', async (event) => 
       if (authMode === 'register' && remoteProfile) {
         await signOutSupabaseSession();
         const alertBox = document.getElementById('auth-alert');
-        document.getElementById('auth-alert-message').textContent = 'This number already has a Goodkind account. Log in with this number instead.';
+        document.getElementById('auth-alert-message').textContent = 'This number already has a Together We Are account. Log in with this number instead.';
         const alertAction = document.getElementById('auth-alert-action');
         alertAction.textContent = 'Go to log in';
         alertAction.onclick = () => openAuth('login');
@@ -799,6 +804,7 @@ function renderLocationOptions(features) {
 function selectLocation(feature) {
   const [longitude, latitude] = feature.geometry.coordinates;
   profile.location = { latitude, longitude, label: formatPlace(feature), source: 'manual' };
+  requestLocationButton.checked = false;
   locationSearch.value = profile.location.label;
   useTypedLocation.hidden = true;
   locationStatus.textContent = `Location selected: ${profile.location.label}`;
@@ -814,6 +820,12 @@ locationSearch.addEventListener('input', () => {
   if (profile.location?.source === 'manual' && query !== profile.location.label) {
     profile.location = null;
     locationStatus.textContent = 'Choose a suggested place to set your location.';
+    locationStatus.classList.remove('ok');
+  }
+  if (profile.location?.source === 'device' && query !== profile.location.label) {
+    profile.location = null;
+    requestLocationButton.checked = false;
+    locationStatus.textContent = 'Choose a suggested place or request your current location.';
     locationStatus.classList.remove('ok');
   }
   if (query.length < 3) {
@@ -839,12 +851,25 @@ locationSearch.addEventListener('input', () => {
 async function readDevicePosition(options) {
   if (window.Capacitor?.isNativePlatform?.()) {
     const { Geolocation } = await import('@capacitor/geolocation');
+    const currentPermissions = await Geolocation.checkPermissions();
+    if (currentPermissions.location !== 'granted' && currentPermissions.coarseLocation !== 'granted') {
+      const granted = await Geolocation.requestPermissions({ permissions: ['coarseLocation', 'location'] });
+      if (granted.location !== 'granted' && granted.coarseLocation !== 'granted') {
+        const denied = new Error('Location permission was denied.');
+        denied.code = 'OS-PLUG-GLOC-0003';
+        throw denied;
+      }
+    }
     return Geolocation.getCurrentPosition(options);
   }
   if (!navigator.geolocation) throw new Error('This browser does not support location access.');
   return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options));
 }
-requestLocationButton.addEventListener('click', async () => {
+requestLocationButton.addEventListener('change', async () => {
+  if (!requestLocationButton.checked) {
+    if (profile.location?.source === 'device') profile.location = null;
+    return;
+  }
   requestLocationButton.disabled = true;
   locationStatus.textContent = 'Allow location access to find nearby areas…';
   try {
@@ -859,6 +884,7 @@ requestLocationButton.addEventListener('click', async () => {
       useTypedLocation.hidden = true;
       hideLocationSuggestions();
     } catch (error) {
+      requestLocationButton.checked = false;
       locationStatus.textContent = error.message || 'Could not find your nearby area. Enter it manually.';
     }
   } catch (error) {
@@ -866,6 +892,7 @@ requestLocationButton.addEventListener('click', async () => {
       ? 'Location access was not allowed. You can enter your city or nearby area instead.'
       : 'Could not read your location. Check your browser settings or enter your area manually.';
     locationStatus.textContent = message;
+    requestLocationButton.checked = false;
   } finally {
     requestLocationButton.disabled = false;
   }
@@ -874,6 +901,7 @@ useTypedLocation.addEventListener('click', () => {
   const label = locationSearch.value.trim();
   if (label.length < 3) return;
   profile.location = { label, latitude: null, longitude: null, source: 'manual-text' };
+  requestLocationButton.checked = false;
   locationStatus.textContent = `Location entered: ${label}`;
   locationStatus.classList.add('ok');
   useTypedLocation.hidden = true;
@@ -1118,32 +1146,53 @@ function openProfileEditor() {
 }
 document.getElementById('edit-profile-button').addEventListener('click', openProfileEditor);
 const photoInputs = [...document.querySelectorAll('.photo-slot input[type="file"]')];
+const selectedProfilePhotoFiles = Array.from({ length: photoInputs.length }, () => null);
+function showSelectedProfilePhoto(input, index, file) {
+  const error = document.querySelector('#photos-form .auth-error');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    error.textContent = 'Choose a JPG, PNG, or WebP image.';
+    return false;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    error.textContent = 'Each photo must be 10 MB or smaller.';
+    return false;
+  }
+  selectedProfilePhotoFiles[index] = file;
+  if (profile.photoUrls[index]) URL.revokeObjectURL(profile.photoUrls[index]);
+  const url = URL.createObjectURL(file);
+  profile.photoUrls[index] = url;
+  const slot = input.closest('.photo-slot');
+  slot.querySelector('.photo-preview').style.backgroundImage = `url("${url}")`;
+  slot.classList.add('has-photo');
+  error.textContent = '';
+  return true;
+}
 photoInputs.forEach((input, index) => {
+  input.addEventListener('click', async (event) => {
+    if (!window.Capacitor?.isNativePlatform?.()) return;
+    event.preventDefault();
+    try {
+      const { Camera } = await import('@capacitor/camera');
+      const result = await Camera.pickImages({ limit: 1, quality: 90, correctOrientation: true });
+      const photo = result.photos?.[0];
+      if (!photo?.webPath) return;
+      const response = await fetch(photo.webPath);
+      const blob = await response.blob();
+      const file = new File([blob], `profile-${index + 1}.${photo.format || 'jpeg'}`, { type: blob.type || `image/${photo.format || 'jpeg'}` });
+      showSelectedProfilePhoto(input, index, file);
+    } catch (error) {
+      if (!/cancel/i.test(error?.message || '')) document.querySelector('#photos-form .auth-error').textContent = error.message || 'Could not open the photo picker.';
+    }
+  });
   input.addEventListener('change', () => {
     const file = input.files?.[0];
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      input.value = '';
-      document.querySelector('#photos-form .auth-error').textContent = 'Choose a JPG, PNG, or WebP image.';
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      input.value = '';
-      document.querySelector('#photos-form .auth-error').textContent = 'Each photo must be 10 MB or smaller.';
-      return;
-    }
-    if (profile.photoUrls[index]) URL.revokeObjectURL(profile.photoUrls[index]);
-    const url = URL.createObjectURL(file);
-    profile.photoUrls[index] = url;
-    const slot = input.closest('.photo-slot');
-    slot.querySelector('.photo-preview').style.backgroundImage = `url("${url}")`;
-    slot.classList.add('has-photo');
-    document.querySelector('#photos-form .auth-error').textContent = '';
+    if (!showSelectedProfilePhoto(input, index, file)) input.value = '';
   });
 });
 document.getElementById('photos-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const chosen = photoInputs.filter((input) => input.files?.length).length;
+  const chosen = selectedProfilePhotoFiles.filter(Boolean).length;
   if (!editProfileMode && chosen < 2) {
     document.querySelector('#photos-form .auth-error').textContent = `Add ${2 - chosen} more required photo${chosen ? '' : 's'} to continue.`;
     return;
@@ -1203,6 +1252,27 @@ function readPlanOffers() {
     const saved = JSON.parse(localStorage.getItem(planOffersStorageKey) || '[]');
     return Array.isArray(saved) ? saved : [];
   } catch { return []; }
+}
+async function refreshSharedMembership() {
+  if (!supabaseDatabaseEnabled) return;
+  const planRows = await supabaseRequest('rest/v1/plans?select=id,slug,name,price_minor_units,billing_period,duration_days,description,feature_keys,custom_features,published&published=eq.true&order=display_order.asc,created_at.asc', { auth: false });
+  const plans = (planRows || []).map((row) => ({ id: row.id, name: row.name, price: Number(row.price_minor_units) / 100, billingPeriod: row.billing_period, durationDays: row.duration_days, description: row.description, features: row.feature_keys || [], customFeatures: row.custom_features || [], published: row.published }));
+  try { localStorage.setItem(planOffersStorageKey, JSON.stringify(plans)); } catch { /* Use the response in this page view even when storage is unavailable. */ }
+  if (!currentPhoneKey) return;
+  const session = readSupabaseSession();
+  if (!session?.user?.id) return;
+  const userId = encodeURIComponent(session.user.id);
+  const rows = await supabaseRequest(`rest/v1/subscriptions?select=plan_id,starts_at,expires_at,plans(name,feature_keys,custom_features)&user_id=eq.${userId}&status=eq.active&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&order=expires_at.desc&limit=1`);
+  if (rows?.length) {
+    const row = rows[0];
+    const subscriptions = readAccountSubscriptions();
+    subscriptions[currentPhoneKey] = { planId: row.plan_id, planName: row.plans?.name || 'Membership', features: [...(row.plans?.feature_keys || []), ...(row.plans?.custom_features || [])], startsAt: row.starts_at, expiresAt: row.expires_at };
+    try { localStorage.setItem(accountSubscriptionsStorageKey, JSON.stringify(subscriptions)); } catch { /* The membership is refreshed again when opened. */ }
+  } else {
+    const subscriptions = readAccountSubscriptions();
+    delete subscriptions[currentPhoneKey];
+    try { localStorage.setItem(accountSubscriptionsStorageKey, JSON.stringify(subscriptions)); } catch { /* The membership is refreshed again when opened. */ }
+  }
 }
 function writePlanOffers(offers) {
   try { localStorage.setItem(planOffersStorageKey, JSON.stringify(offers)); } catch { /* Browser-only preview storage. */ }
@@ -1286,7 +1356,7 @@ function renderSubscriptionPage() {
   subscriptionNotice = '';
   const freeCard = document.createElement('article');
   freeCard.className = 'subscription-card free-plan-card';
-  freeCard.innerHTML = '<div class="section-kicker">A GOOD START</div><h2>Free</h2><p class="subscription-price">₹0 <span>always</span></p><p>Get to know Goodkind at your own pace.</p>';
+  freeCard.innerHTML = '<div class="section-kicker">A GOOD START</div><h2>Free</h2><p class="subscription-price">₹0 <span>always</span></p><p>Get to know Together We Are at your own pace.</p>';
   const freeList = document.createElement('ul');
   ['Browse profiles and send messages', `${freeDailyLikeLimit} likes per day`, 'Gender, age, and distance filters'].forEach((item) => { const li = document.createElement('li'); li.textContent = item; freeList.append(li); });
   const freeButton = document.createElement('button');

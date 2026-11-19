@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4ee" />
   <meta name="description" content="Meet people who feel like your kind of people. A more thoughtful, inclusive way to date." />
-  <title>Goodkind — meet with intention</title>
+  <title>Together We Are — find your people</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="#top" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
+    <a class="brand" href="#top" aria-label="Together We Are home"><span class="brand-mark">t</span> Together We Are</a>
     <div class="mobile-drawer" id="mobile-drawer" aria-hidden="false">
       <nav class="main-nav" aria-label="Main navigation">
         <button id="find-matches-nav" class="nav-match-trigger hidden" type="button">Find matches</button><button id="likes-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Likes <span id="likes-badge">3</span></button><button id="messages-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Messages <span id="messages-badge">0</span></button><button id="viewed-nav" class="nav-match-trigger likes-nav-trigger hidden" type="button">Viewed you <span id="viewed-badge">3</span></button><button id="profile-nav" class="nav-match-trigger hidden" type="button">Profile</button><button id="plans-nav" class="nav-match-trigger" type="button">Plans</button>
@@ -29,7 +29,8 @@
       <div class="hero-copy">
         <div class="eyebrow"><span class="eyebrow-line"></span> DATING, WITH A LITTLE MORE HEART</div>
         <h1>Meet someone.<br><em>Feel something.</em></h1>
-        <p class="hero-lede">Good connections start when you can show up as your whole self. Meet people who are here for the same reason you are.</p>
+        <p class="hero-slogan">Find your people. Grow together.</p>
+        <p class="hero-lede">Together We Are starts with showing up as your whole self. Meet people who are here for the same reason you are.</p>
         <div class="hero-actions"><button id="hero-match-trigger" data-auth-mode="register" class="button button-dark auth-trigger">Find your kind of person <span>↗</span></button><button id="hero-plans-trigger" class="text-button hero-plans-trigger" type="button">Explore membership plans</button><div class="social-proof"><div class="avatar-stack"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=90&h=90&fit=crop&crop=faces" alt=""><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=90&h=90&fit=crop&crop=faces" alt=""><img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=90&h=90&fit=crop&crop=faces" alt=""></div><span>For all the ways you show up.</span></div></div>
         <div class="hero-note"><span class="sparkle">✳</span><span>Less swiping. More <i>oh, you too?</i></span></div>
       </div>
@@ -49,14 +50,14 @@
 
     
 
-    <section class="quote-section"><div class="quote-mark">“</div><blockquote>Turns out, the best thing about dating<br>is when it stops feeling like dating.</blockquote><p>— THE GOODKIND IDEA</p><div class="quote-flower">✿</div></section>
+    <section class="quote-section"><div class="quote-mark">“</div><blockquote>Turns out, the best thing about dating<br>is when it stops feeling like dating.</blockquote><p>— THE TOGETHER WE ARE IDEA</p><div class="quote-flower">✿</div></section>
 
     <section id="join" class="join-section section-wrap"><div class="join-card"><div class="join-copy"><div class="section-kicker light-kicker">A GOOD THING IS GROWING</div><h2>Come as you are.<br><em>Meet who you are.</em></h2><p>Start with your mobile number. Build your profile with the details that help make a thoughtful connection.</p></div><div class="join-form"><button id="join-register-trigger" class="button button-light auth-trigger join-register-trigger" data-auth-mode="register">Sign up with your mobile number <span>↗</span></button><span class="form-message" id="join-register-message">Your number is used to sign in and verify your account.</span></div><span class="join-flower">✳</span></div></section>
   </main>
   <div class="auth-overlay" id="auth-overlay" aria-hidden="true">
     <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title">
       <button class="auth-close" aria-label="Close sign up">×</button>
-      <div class="auth-brand"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></div>
+      <div class="auth-brand"><span class="brand-mark">t</span> Together We Are</div>
       <div class="auth-progress"><span class="progress-step current"></span><span class="progress-step"></span><span class="progress-step"></span><span class="progress-step"></span><span class="progress-step"></span></div>
       <form id="phone-form" class="auth-panel">
         <div class="section-kicker">A GOOD PLACE TO START</div><h2 id="auth-title">Your number,<br><em>your next chapter.</em></h2>
@@ -81,7 +82,7 @@
           <div><label for="looking-for">I’m looking for</label><select id="looking-for" required><option value="" disabled selected>Choose your preference</option><option>Women</option><option>Men</option><option>Non-binary people</option><option>Women and men</option><option>Everyone</option></select></div>
           <div><label for="dating-intent">What are you looking for?</label><select id="dating-intent" required><option value="" disabled selected>Choose your intention</option><option>A long-term relationship</option><option>A life partner</option><option>Something casual</option><option>New friends first</option><option>Still figuring it out</option></select></div>
           <div class="field-pair"><div><label for="drinking">Drinking</label><select id="drinking" required><option value="" disabled selected>Select one</option><option>No</option><option>Sometimes</option><option>Often</option><option>Prefer not to say</option></select></div><div><label for="smoking">Smoking</label><select id="smoking" required><option value="" disabled selected>Select one</option><option>No</option><option>Sometimes</option><option>Often</option><option>Prefer not to say</option></select></div></div>
-          <div class="location-field"><div class="manual-location"><label for="location-search">Your city or nearby area <span class="required-label">Required</span></label><input id="location-search" type="search" autocomplete="off" placeholder="Start typing a city or neighborhood…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="location-suggestions"><span class="location-hint">Type at least 3 characters for nearby suggestions, or allow access to your current location.</span><div id="location-suggestions" class="location-suggestions" role="listbox" aria-label="Nearby areas" hidden></div><button id="manual-location-use" class="manual-location-use" type="button" hidden>Use this area</button><button id="request-location-button" class="location-button" type="button">Use my current location</button></div>
+          <div class="location-field"><div class="manual-location"><label for="location-search">Your city or nearby area <span class="required-label">Required</span></label><input id="location-search" type="search" autocomplete="off" placeholder="Start typing a city or neighborhood…" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="location-suggestions"><span class="location-hint">Type at least 3 characters for nearby suggestions, or check to request current location access.</span><div id="location-suggestions" class="location-suggestions" role="listbox" aria-label="Nearby areas" hidden></div><button id="manual-location-use" class="manual-location-use" type="button" hidden>Use this area</button><label class="location-current-option"><input id="request-location-button" type="checkbox"><span>Use my current location</span></label></div>
             <span id="location-status" class="location-status" aria-live="polite">Location not added yet.</span><span class="location-attribution">Place search by <a href="https://photon.komoot.io/" target="_blank" rel="noreferrer">Photon</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a></span></div>
         </div>
         <div class="step-actions"><button class="text-button back-to-profile" type="button">← Back</button><button class="button button-dark auth-submit" type="submit">Continue <span>→</span></button></div><div class="auth-error" aria-live="polite"></div>
@@ -162,7 +163,7 @@
   </section>
   <section id="profile-page" class="profile-page" hidden>
     <div class="profile-page-wrap section-wrap">
-      <div class="section-kicker">YOUR GOODKIND PROFILE</div>
+      <div class="section-kicker">YOUR TOGETHER WE ARE PROFILE</div>
       <div class="profile-page-heading"><div><h1 id="profile-display-name">Your profile</h1><p id="profile-display-location"></p></div><button id="edit-profile-button" class="button button-dark" type="button">Edit profile <span>✎</span></button></div>
       <div id="profile-page-empty" class="profile-page-empty" hidden>Your profile details haven’t been saved in this browser yet. Use Edit profile to complete them.</div>
       <div class="profile-page-card">

@@ -4,33 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f7f4ee">
-  <title>Admin sign in — Goodkind</title>
+  <title>Admin sign in — Together We Are</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=admin-style-20261117">
+  <script src="supabase-config.js"></script>
   <script src="admin-auth.js"></script>
   <script>if (window.GoodkindAdminAuth?.isSignedIn()) location.replace('admin.html');</script>
 </head>
 <body class="admin-login-body">
   <header class="site-header admin-header">
-    <a class="brand" href="index.html" aria-label="Goodkind home"><span class="brand-mark">g</span> goodkind<span class="brand-dot">.</span></a>
-    <a class="admin-main-link" href="index.html">← Back to Goodkind</a>
+    <a class="brand" href="index.html" aria-label="Together We Are home"><span class="brand-mark">t</span> Together We Are</a>
+    <a class="admin-main-link" href="index.html">← Back to Together We Are</a>
   </header>
   <main class="admin-login-page">
     <section class="admin-login-card" aria-labelledby="admin-login-title">
-      <div class="section-kicker">GOODKIND ADMIN</div>
+        <div class="section-kicker">TOGETHER WE ARE · ADMIN</div>
       <h1 id="admin-login-title">Sign in to the<br><em>control room.</em></h1>
       <p>Use your administrator credentials to manage membership plans.</p>
       <form id="admin-login-form">
-        <label for="admin-login-username">Username</label>
-        <input id="admin-login-username" name="username" autocomplete="username" required>
+        <label for="admin-login-username">Admin email</label>
+        <input id="admin-login-username" name="username" type="email" autocomplete="username" required>
         <label for="admin-login-password">Password</label>
         <input id="admin-login-password" name="password" type="password" autocomplete="current-password" required>
         <button class="button button-dark" type="submit">Sign in <span>→</span></button>
         <p id="admin-login-feedback" class="admin-feedback" role="alert" aria-live="polite"></p>
       </form>
-      <p class="admin-auth-note">Demo portal: the sign-in is enforced in this browser only. Add server-side authentication before using it with real accounts.</p>
+      <p class="admin-auth-note">Sign in with the Supabase administrator account assigned to this portal.</p>
     </section>
   </main>
   <script>
@@ -48,8 +49,8 @@
         );
         if (!accepted) { feedback.textContent = 'That username or password is not correct.'; return; }
         location.replace('admin.html');
-      } catch {
-        feedback.textContent = 'Sign-in is unavailable in this browser. Please use a modern browser.';
+      } catch (error) {
+        feedback.textContent = error.message || 'Sign-in is unavailable. Check the Supabase setup and try again.';
       } finally { button.disabled = false; }
     });
   </script>
